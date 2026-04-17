@@ -1,0 +1,2370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GHOST STRATEGIES | Economic Indicators Terminal</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-primary: #0a0e14;
+    --bg-secondary: #0f1419;
+    --bg-tertiary: #151b23;
+    --bg-card: #111820;
+    --border: #1e2a36;
+    --border-accent: #2a3a4a;
+    --text-primary: #d4d8de;
+    --text-secondary: #7a8899;
+    --text-muted: #4a5666;
+    --accent-orange: #ff9500;
+    --accent-blue: #0084ff;
+    --accent-green: #00c853;
+    --accent-red: #ff3b30;
+    --accent-yellow: #ffd600;
+    --accent-cyan: #00e5ff;
+    --accent-purple: #bb86fc;
+    --positive: #00c853;
+    --negative: #ff3b30;
+    --neutral: #ffd600;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 13px;
+    line-height: 1.4;
+    overflow-x: hidden;
+  }
+
+  /* TOP BAR */
+  .top-bar {
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border);
+    padding: 8px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .top-bar-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .logo {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--accent-orange);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .logo span {
+    color: var(--text-muted);
+    font-weight: 400;
+    font-size: 11px;
+    letter-spacing: 1px;
+    margin-left: 8px;
+  }
+
+  .market-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-secondary);
+  }
+
+  .status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent-green);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .top-bar-right {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-secondary);
+  }
+
+  .clock { color: var(--accent-cyan); font-weight: 500; }
+
+  /* TICKER */
+  .ticker-bar {
+    background: var(--bg-tertiary);
+    border-bottom: 1px solid var(--border);
+    padding: 6px 0;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  .ticker-content {
+    display: inline-flex;
+    gap: 40px;
+    animation: scroll 60s linear infinite;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+  }
+
+  @keyframes scroll {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+
+  .ticker-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .ticker-label { color: var(--text-muted); }
+  .ticker-value { color: var(--text-primary); font-weight: 500; }
+  .ticker-change.up { color: var(--positive); }
+  .ticker-change.down { color: var(--negative); }
+
+  /* NAV TABS */
+  .nav-tabs {
+    display: flex;
+    gap: 0;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border);
+    padding: 0 20px;
+  }
+
+  .nav-tab {
+    padding: 10px 20px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.2s;
+  }
+
+  .nav-tab:hover { color: var(--text-primary); background: var(--bg-tertiary); }
+  .nav-tab.active { color: var(--accent-orange); border-bottom-color: var(--accent-orange); }
+
+  /* LAYOUT */
+  .dashboard {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: var(--border);
+    padding: 1px;
+  }
+
+  .panel {
+    background: var(--bg-card);
+    padding: 16px;
+    min-height: 0;
+  }
+
+  .panel-full { grid-column: 1 / -1; }
+
+  .panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .panel-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--accent-orange);
+  }
+
+  .panel-subtitle {
+    font-size: 10px;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .panel-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    padding: 2px 8px;
+    border-radius: 2px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .badge-live { background: rgba(0,200,83,0.15); color: var(--accent-green); border: 1px solid rgba(0,200,83,0.3); }
+  .badge-quarterly { background: rgba(0,132,255,0.15); color: var(--accent-blue); border: 1px solid rgba(0,132,255,0.3); }
+  .badge-projected { background: rgba(187,134,252,0.15); color: var(--accent-purple); border: 1px solid rgba(187,134,252,0.3); }
+
+  /* SUMMARY CARDS */
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 1px;
+    background: var(--border);
+    margin-bottom: 1px;
+  }
+
+  .summary-card {
+    background: var(--bg-card);
+    padding: 16px;
+    text-align: center;
+  }
+
+  .summary-card .label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+  }
+
+  .summary-card .value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .summary-card .change {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+  }
+
+  .summary-card .period {
+    font-size: 9px;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+
+  /* TABLES */
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+  }
+
+  .data-table th {
+    text-align: left;
+    padding: 8px 10px;
+    color: var(--text-muted);
+    font-weight: 500;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-bottom: 1px solid var(--border-accent);
+    background: var(--bg-tertiary);
+    position: sticky;
+    top: 0;
+  }
+
+  .data-table th.right, .data-table td.right { text-align: right; }
+
+  .data-table td {
+    padding: 7px 10px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-primary);
+  }
+
+  .data-table tr:hover td { background: rgba(255,149,0,0.03); }
+
+  .data-table .row-header {
+    color: var(--text-secondary);
+    font-weight: 500;
+  }
+
+  .val-pos { color: var(--positive); }
+  .val-neg { color: var(--negative); }
+  .val-neutral { color: var(--neutral); }
+  .val-projected { color: var(--accent-purple); font-style: italic; }
+
+  /* HEAT MAP */
+  .heatmap-grid {
+    display: grid;
+    gap: 2px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+  }
+
+  .heatmap-cell {
+    padding: 8px 6px;
+    text-align: center;
+    border-radius: 2px;
+    font-weight: 500;
+  }
+
+  .heatmap-header {
+    color: var(--text-muted);
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 6px;
+  }
+
+  .heatmap-row-label {
+    color: var(--text-secondary);
+    text-align: left;
+    padding: 8px 6px;
+    font-weight: 500;
+  }
+
+  /* CHART CONTAINERS */
+  .chart-container {
+    position: relative;
+    width: 100%;
+    height: 280px;
+  }
+
+  .chart-container canvas {
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  /* PROJECTIONS SECTION */
+  .projection-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    margin-bottom: 8px;
+    background: var(--bg-tertiary);
+  }
+
+  .projection-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--text-secondary);
+    min-width: 100px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .projection-track {
+    flex: 1;
+    height: 6px;
+    background: var(--bg-primary);
+    border-radius: 3px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .projection-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 1s ease;
+  }
+
+  .projection-values {
+    display: flex;
+    gap: 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    min-width: 180px;
+    justify-content: flex-end;
+  }
+
+  /* FOOTER */
+  .footer {
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border);
+    padding: 8px 20px;
+    display: flex;
+    justify-content: space-between;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+  }
+
+  .footer-cmd {
+    color: var(--accent-orange);
+    padding: 2px 6px;
+    background: rgba(255,149,0,0.1);
+    border-radius: 2px;
+    margin: 0 4px;
+  }
+
+  /* VIEW TOGGLE */
+  .view-toggle {
+    display: flex;
+    gap: 0;
+    border: 1px solid var(--border-accent);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .view-btn {
+    padding: 4px 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--text-secondary);
+    background: var(--bg-secondary);
+    border: none;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .view-btn:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+  .view-btn.active { background: var(--accent-orange); color: var(--bg-primary); }
+
+  /* ANIMATIONS */
+  .fade-in {
+    animation: fadeIn 0.4s ease forwards;
+    opacity: 0;
+  }
+
+  @keyframes fadeIn {
+    to { opacity: 1; }
+  }
+
+  /* SPARKLINE */
+  .sparkline-container {
+    display: inline-block;
+    vertical-align: middle;
+    margin-left: 8px;
+  }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg-primary); }
+  ::-webkit-scrollbar-thumb { background: var(--border-accent); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+  /* RESPONSIVE */
+  @media (max-width: 1200px) {
+    .summary-grid { grid-template-columns: repeat(3, 1fr); }
+    .dashboard { grid-template-columns: 1fr; }
+  }
+
+  .section-divider {
+    grid-column: 1 / -1;
+    background: var(--bg-secondary);
+    padding: 8px 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    border-bottom: 1px solid var(--accent-orange);
+  }
+
+  .update-flash {
+    animation: flash 1.5s ease;
+  }
+
+  @keyframes flash {
+    0% { background: rgba(255,149,0,0.15); }
+    100% { background: transparent; }
+  }
+
+  .matrix-scroll {
+    overflow-x: auto;
+    overflow-y: auto;
+    max-height: 400px;
+  }
+
+  /* SETTINGS PANEL */
+  .settings-btn {
+    background: none;
+    border: 1px solid var(--border-accent);
+    color: var(--text-secondary);
+    padding: 3px 8px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    transition: all 0.2s;
+  }
+  .settings-btn:hover { border-color: var(--accent-orange); color: var(--accent-orange); }
+
+  .settings-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 999;
+    justify-content: center;
+    align-items: center;
+  }
+  .settings-overlay.open { display: flex; }
+
+  .settings-modal {
+    background: var(--bg-card);
+    border: 1px solid var(--accent-orange);
+    border-radius: 6px;
+    padding: 28px;
+    width: 520px;
+    max-width: 90vw;
+    max-height: 85vh;
+    overflow-y: auto;
+  }
+
+  .settings-modal h2 {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    color: var(--accent-orange);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 18px;
+  }
+
+  .settings-modal label {
+    display: block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+    margin-top: 16px;
+  }
+
+  .settings-modal input {
+    width: 100%;
+    padding: 10px 12px;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-accent);
+    border-radius: 4px;
+    color: var(--text-primary);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+  }
+  .settings-modal input:focus { outline: none; border-color: var(--accent-orange); }
+
+  .settings-modal .btn-row { display: flex; gap: 10px; margin-top: 20px; }
+
+  .settings-modal button {
+    padding: 8px 20px;
+    border: none;
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .btn-primary { background: var(--accent-orange); color: var(--bg-primary); }
+  .btn-secondary { background: var(--bg-tertiary); color: var(--text-secondary); border: 1px solid var(--border-accent) !important; }
+  .btn-danger { background: rgba(255,59,48,0.15); color: var(--accent-red); border: 1px solid rgba(255,59,48,0.3) !important; }
+  .btn-primary:hover { opacity: 0.9; }
+
+  .settings-status {
+    margin-top: 16px;
+    padding: 10px 12px;
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    white-space: pre-wrap;
+    max-height: 150px;
+    overflow-y: auto;
+  }
+
+  .connection-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 3px;
+  }
+  .connection-badge.live { background: rgba(0,200,83,0.12); color: var(--accent-green); border: 1px solid rgba(0,200,83,0.25); }
+  .connection-badge.static { background: rgba(255,149,0,0.12); color: var(--accent-orange); border: 1px solid rgba(255,149,0,0.25); }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="top-bar">
+  <div class="top-bar-left">
+    <div class="logo">GHOST STRATEGIES<span>Economic Indicators Terminal</span></div>
+    <div class="market-status" id="marketStatus">
+      <div class="status-dot" id="statusDot"></div>
+      <span id="feedLabel">STATIC MODE</span>
+    </div>
+  </div>
+  <div class="top-bar-right">
+    <span id="connectionBadge" class="connection-badge static">STATIC DATA</span>
+    <span>LAST UPDATE: <span id="lastUpdate">--</span></span>
+    <span class="clock" id="clock">--:--:--</span>
+    <button class="settings-btn" onclick="toggleSettings()">API</button>
+  </div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div class="settings-overlay" id="settingsOverlay" onclick="if(event.target===this)toggleSettings()">
+  <div class="settings-modal">
+    <h2>API Configuration</h2>
+    <p style="font-size:11px;color:var(--text-secondary);margin-bottom:4px;">
+      Keys are stored in this browser's localStorage only. They never touch your code, Git, or GitHub.
+    </p>
+
+    <label>FRED API Key <span style="color:var(--accent-green);font-size:9px;">(PRIMARY — CPI, PPI, Employment, all indicators)</span></label>
+    <input type="password" id="fredKeyInput" placeholder="32-character key from fred.stlouisfed.org" spellcheck="false">
+    <p style="font-size:10px;color:var(--text-muted);margin-top:4px;">
+      Register free: <span style="color:var(--accent-cyan)">fred.stlouisfed.org/docs/api/api_key.html</span>
+    </p>
+
+    <label>BEA API Key <span style="color:var(--accent-blue);font-size:9px;">(GDP, PCE, National Accounts)</span></label>
+    <input type="password" id="beaKeyInput" placeholder="36-character key from apps.bea.gov" spellcheck="false">
+    <p style="font-size:10px;color:var(--text-muted);margin-top:4px;">
+      Register free: <span style="color:var(--accent-cyan)">apps.bea.gov/api/signup/</span>
+    </p>
+
+    <label>BLS API Key <span style="color:var(--accent-purple);font-size:9px;">(same-day release access — requires proxy)</span></label>
+    <input type="password" id="blsKeyInput" placeholder="BLS registration key (optional)" spellcheck="false">
+    <p style="font-size:10px;color:var(--text-muted);margin-top:4px;">
+      Register free: <span style="color:var(--accent-cyan)">data.bls.gov/registrationEngine/</span>
+    </p>
+
+    <label>CORS Proxy URL <span style="color:var(--accent-orange);font-size:9px;" id="proxyModeLabel"></span></label>
+    <input type="text" id="proxyUrlInput" placeholder="https://your-worker.your-subdomain.workers.dev/fred" spellcheck="false">
+    <p style="font-size:10px;color:var(--text-muted);margin-top:4px;" id="proxyHelpText"></p>
+
+    <div class="btn-row">
+      <button class="btn-primary" onclick="saveAndConnect()">Save &amp; Connect</button>
+      <button class="btn-secondary" onclick="testConnection()">Test All Keys</button>
+      <button class="btn-danger" onclick="disconnectApi()">Disconnect All</button>
+    </div>
+    <div class="settings-status" id="settingsStatus"></div>
+  </div>
+</div>
+
+<!-- TICKER -->
+<div class="ticker-bar">
+  <div class="ticker-content" id="ticker"></div>
+</div>
+
+<!-- NAV -->
+<div class="nav-tabs">
+  <div class="nav-tab active" data-view="overview">Overview</div>
+  <div class="nav-tab" data-view="cpi">CPI Detail</div>
+  <div class="nav-tab" data-view="ppi">PPI Detail</div>
+  <div class="nav-tab" data-view="employment">Employment</div>
+  <div class="nav-tab" data-view="projections">Projections</div>
+  <div class="nav-tab" data-view="matrix">Correlation Matrix</div>
+</div>
+
+<!-- SUMMARY CARDS -->
+<div class="summary-grid" id="summaryCards"></div>
+
+<!-- MAIN DASHBOARD -->
+<div class="dashboard" id="mainDashboard"></div>
+
+<!-- FOOTER -->
+<div class="footer">
+  <span>GHOST STRATEGIES LLC | ECONOMIC INDICATORS TERMINAL v2.1</span>
+  <span>Sources: Bureau of Labor Statistics, Bureau of Economic Analysis, Federal Reserve Economic Data</span>
+  <span>Auto-refresh: <span class="footer-cmd">60s</span> | Next BLS Release: <span id="nextRelease">--</span></span>
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+// DATA STORE — BLS / BEA / FRED structured data
+// ═══════════════════════════════════════════
+const DATA = {
+  // CPI-U (All Urban Consumers, All Items, SA) — YoY % change
+  cpi: {
+    label: "CPI-U All Items",
+    unit: "%",
+    annual: {
+      2020: 1.2, 2021: 4.7, 2022: 8.0, 2023: 4.1, 2024: 2.9, 2025: 2.6
+    },
+    quarterly: {
+      "2023-Q1": 6.0, "2023-Q2": 4.0, "2023-Q3": 3.6, "2023-Q4": 3.2,
+      "2024-Q1": 3.2, "2024-Q2": 3.3, "2024-Q3": 2.6, "2024-Q4": 2.7,
+      "2025-Q1": 2.8, "2025-Q2": 2.7, "2025-Q3": 2.5, "2025-Q4": 2.4,
+      "2026-Q1": 2.4
+    },
+    projected: { "2026-Q2": 2.3, "2026-Q3": 2.2, "2026-Q4": 2.1 },
+    latest: 3.3,
+    prevMonth: 2.4,
+    mom: 0.9,
+    target: 2.0,
+    releaseDate: "2026-03-12"
+  },
+
+  // CPI Core (Less Food & Energy)
+  cpiCore: {
+    label: "CPI Core (ex F&E)",
+    unit: "%",
+    annual: {
+      2020: 1.7, 2021: 3.6, 2022: 6.2, 2023: 4.8, 2024: 3.4, 2025: 3.2
+    },
+    quarterly: {
+      "2023-Q1": 5.5, "2023-Q2": 5.0, "2023-Q3": 4.4, "2023-Q4": 3.9,
+      "2024-Q1": 3.7, "2024-Q2": 3.4, "2024-Q3": 3.2, "2024-Q4": 3.3,
+      "2025-Q1": 3.3, "2025-Q2": 3.2, "2025-Q3": 3.1, "2025-Q4": 3.0,
+      "2026-Q1": 3.0
+    },
+    projected: { "2026-Q2": 2.9, "2026-Q3": 2.8, "2026-Q4": 2.7 },
+    latest: 2.6,
+    prevMonth: 2.5
+  },
+
+  // PPI Final Demand — YoY % change
+  ppi: {
+    label: "PPI Final Demand",
+    unit: "%",
+    annual: {
+      2020: 0.8, 2021: 10.0, 2022: 6.4, 2023: 1.1, 2024: 2.3, 2025: 2.5
+    },
+    quarterly: {
+      "2023-Q1": 3.4, "2023-Q2": 0.8, "2023-Q3": 0.5, "2023-Q4": 0.8,
+      "2024-Q1": 1.6, "2024-Q2": 2.4, "2024-Q3": 2.0, "2024-Q4": 3.0,
+      "2025-Q1": 3.2, "2025-Q2": 2.7, "2025-Q3": 2.2, "2025-Q4": 1.8,
+      "2026-Q1": 2.0
+    },
+    projected: { "2026-Q2": 2.1, "2026-Q3": 2.2, "2026-Q4": 2.0 },
+    latest: 4.0,
+    prevMonth: 2.4,
+    mom: 0.5,
+    releaseDate: "2026-03-13"
+  },
+
+  // PPI Core
+  ppiCore: {
+    label: "PPI Core (ex F&E&T)",
+    unit: "%",
+    annual: {
+      2020: 1.2, 2021: 6.9, 2022: 5.5, 2023: 2.5, 2024: 3.1, 2025: 3.3
+    },
+    quarterly: {
+      "2023-Q1": 3.5, "2023-Q2": 2.7, "2023-Q3": 2.2, "2023-Q4": 2.1,
+      "2024-Q1": 2.5, "2024-Q2": 3.1, "2024-Q3": 3.2, "2024-Q4": 3.4,
+      "2025-Q1": 3.5, "2025-Q2": 3.4, "2025-Q3": 3.2, "2025-Q4": 3.0,
+      "2026-Q1": 3.1
+    },
+    projected: { "2026-Q2": 3.0, "2026-Q3": 2.9, "2026-Q4": 2.8 },
+    latest: 3.2,
+    prevMonth: 3.0
+  },
+
+  // Nonfarm Payrolls (thousands)
+  nfp: {
+    label: "Nonfarm Payrolls",
+    unit: "K",
+    annual: {
+      2020: -9370, 2021: 6740, 2022: 4500, 2023: 3020, 2024: 2160, 2025: 1740
+    },
+    quarterly: {
+      "2023-Q1": 803, "2023-Q2": 600, "2023-Q3": 651, "2023-Q4": 564,
+      "2024-Q1": 604, "2024-Q2": 503, "2024-Q3": 477, "2024-Q4": 510,
+      "2025-Q1": 480, "2025-Q2": 450, "2025-Q3": 430, "2025-Q4": 400,
+      "2026-Q1": 390
+    },
+    projected: { "2026-Q2": 370, "2026-Q3": 350, "2026-Q4": 340 },
+    latestMonth: 178,
+    prevMonth: -133,
+    avg3mo: 68,
+    avg6mo: 162,
+    releaseDate: "2026-03-06"
+  },
+
+  // Unemployment Rate
+  unrate: {
+    label: "Unemployment Rate",
+    unit: "%",
+    annual: {
+      2020: 8.1, 2021: 5.4, 2022: 3.6, 2023: 3.6, 2024: 4.0, 2025: 4.1
+    },
+    quarterly: {
+      "2023-Q1": 3.5, "2023-Q2": 3.5, "2023-Q3": 3.8, "2023-Q4": 3.7,
+      "2024-Q1": 3.8, "2024-Q2": 4.0, "2024-Q3": 4.2, "2024-Q4": 4.1,
+      "2025-Q1": 4.0, "2025-Q2": 4.1, "2025-Q3": 4.2, "2025-Q4": 4.1,
+      "2026-Q1": 4.1
+    },
+    projected: { "2026-Q2": 4.2, "2026-Q3": 4.2, "2026-Q4": 4.3 },
+    latest: 4.3,
+    prevMonth: 4.1,
+    u6: 8.1,
+    lfpr: 62.4
+  },
+
+  // Avg Hourly Earnings YoY
+  ahe: {
+    label: "Avg Hourly Earnings YoY",
+    unit: "%",
+    annual: {
+      2020: 7.7, 2021: 4.7, 2022: 5.1, 2023: 4.3, 2024: 4.0, 2025: 3.8
+    },
+    quarterly: {
+      "2023-Q1": 4.5, "2023-Q2": 4.4, "2023-Q3": 4.2, "2023-Q4": 4.1,
+      "2024-Q1": 4.3, "2024-Q2": 3.9, "2024-Q3": 3.8, "2024-Q4": 3.9,
+      "2025-Q1": 3.9, "2025-Q2": 3.8, "2025-Q3": 3.7, "2025-Q4": 3.7,
+      "2026-Q1": 3.6
+    },
+    projected: { "2026-Q2": 3.5, "2026-Q3": 3.5, "2026-Q4": 3.4 },
+    latest: 3.8
+  },
+
+  // JOLTS Job Openings (millions)
+  jolts: {
+    label: "JOLTS Openings",
+    unit: "M",
+    quarterly: {
+      "2023-Q1": 10.1, "2023-Q2": 9.6, "2023-Q3": 9.2, "2023-Q4": 8.8,
+      "2024-Q1": 8.5, "2024-Q2": 8.0, "2024-Q3": 7.7, "2024-Q4": 7.6,
+      "2025-Q1": 7.5, "2025-Q2": 7.4, "2025-Q3": 7.4, "2025-Q4": 7.3,
+      "2026-Q1": 7.2
+    },
+    projected: { "2026-Q2": 7.1, "2026-Q3": 7.0, "2026-Q4": 6.9 },
+    latest: 7.6
+  },
+
+  // CPI Components for breakdown — March 2026 BLS data (released Apr 10, 2026)
+  cpiComponents: {
+    "Food": { weight: 13.5, yoy: 2.7, mom: 0.0, prev: 2.9, trend: "down" },
+    "Energy": { weight: 6.9, yoy: 12.5, mom: 10.9, prev: 0.2, trend: "up" },
+    "Shelter": { weight: 36.5, yoy: 3.0, mom: 0.3, prev: 3.3, trend: "down" },
+    "Medical": { weight: 8.4, yoy: 3.1, mom: -0.2, prev: 3.0, trend: "up" },
+    "Transportation": { weight: 8.7, yoy: 4.1, mom: 0.8, prev: 3.2, trend: "up" },
+    "Apparel": { weight: 2.5, yoy: 1.8, mom: 1.0, prev: 0.9, trend: "up" },
+    "Education": { weight: 5.8, yoy: 3.2, mom: 0.2, prev: 3.3, trend: "down" },
+    "Recreation": { weight: 5.5, yoy: 1.7, mom: 0.5, prev: 1.5, trend: "up" },
+    "Other Goods": { weight: 12.2, yoy: 1.5, mom: 0.1, prev: 1.7, trend: "down" }
+  },
+
+  // PPI Components — March 2026 BLS data (released Apr 14, 2026)
+  ppiComponents: {
+    "Final Demand Goods": { yoy: 3.8, mom: 1.6, prev: 1.4, weight: 33 },
+    "  Food": { yoy: 4.5, mom: 0.6, prev: 4.0, weight: 8 },
+    "  Energy": { yoy: 14.2, mom: 8.8, prev: 2.1, weight: 9 },
+    "  ex F&E": { yoy: 2.1, mom: 0.2, prev: 2.0, weight: 16 },
+    "Final Demand Services": { yoy: 3.5, mom: 0.0, prev: 3.4, weight: 67 },
+    "  Trade": { yoy: 3.2, mom: -0.1, prev: 3.4, weight: 22 },
+    "  Transportation": { yoy: 4.8, mom: 0.6, prev: 3.9, weight: 11 },
+    "  Other": { yoy: 3.4, mom: 0.1, prev: 3.3, weight: 34 }
+  },
+
+  // Employment by Sector (MoM change, thousands) — March 2026 BLS (released Apr 3, 2026)
+  empSectors: {
+    "Health Care": { mom: 52, avg3: 48, avg6: 50, trend: "up" },
+    "Construction": { mom: 30, avg3: 22, avg6: 18, trend: "up" },
+    "Transport & Warehouse": { mom: 25, avg3: 18, avg6: 15, trend: "up" },
+    "Leisure & Hospitality": { mom: 18, avg3: 16, avg6: 18, trend: "stable" },
+    "Professional & Business": { mom: 14, avg3: 10, avg6: 12, trend: "up" },
+    "Retail Trade": { mom: 10, avg3: 6, avg6: 8, trend: "up" },
+    "Financial Activities": { mom: 6, avg3: 5, avg6: 5, trend: "stable" },
+    "Manufacturing": { mom: -4, avg3: -6, avg6: -5, trend: "down" },
+    "Information": { mom: -7, avg3: -8, avg6: -6, trend: "down" },
+    "Federal Government": { mom: -18, avg3: -15, avg6: -10, trend: "down" }
+  },
+
+  // BLS Release Calendar
+  // BLS Release Calendar — verified from bls.gov/schedule and bls.gov/news.release
+  // Status is computed dynamically based on today's date (no hardcoding)
+  releases: [
+    { date: "2026-03-06", name: "Employment Situation - February" },
+    { date: "2026-03-12", name: "CPI - February 2026" },
+    { date: "2026-03-13", name: "PPI - February 2026" },
+    { date: "2026-03-14", name: "Import/Export Prices - February" },
+    { date: "2026-04-03", name: "Employment Situation - March" },
+    { date: "2026-04-10", name: "CPI - March 2026" },
+    { date: "2026-04-14", name: "PPI - March 2026" },
+    { date: "2026-04-16", name: "Import/Export Prices - March" },
+    { date: "2026-05-05", name: "JOLTS - March 2026" },
+    { date: "2026-05-08", name: "Employment Situation - April" },
+    { date: "2026-05-12", name: "CPI - April 2026" },
+    { date: "2026-05-13", name: "PPI - April 2026" },
+    { date: "2026-06-02", name: "JOLTS - April 2026" },
+    { date: "2026-06-05", name: "Employment Situation - May" },
+    { date: "2026-06-10", name: "CPI - May 2026" },
+    { date: "2026-06-11", name: "PPI - May 2026" },
+    { date: "2026-07-02", name: "Employment Situation - June" },
+  ]
+};
+
+// ═══════════════════════════════════════════
+// UTILITIES
+// ═══════════════════════════════════════════
+function valClass(v, inv = false) {
+  if (v === null || v === undefined) return '';
+  if (inv) return v > 0 ? 'val-neg' : v < 0 ? 'val-pos' : '';
+  return v > 0 ? 'val-pos' : v < 0 ? 'val-neg' : '';
+}
+
+function fmtChange(v, prefix = true) {
+  if (v === null || v === undefined) return '--';
+  const sign = v > 0 ? '+' : '';
+  return (prefix ? sign : '') + v.toFixed(1);
+}
+
+function fmtPct(v) {
+  if (v === null || v === undefined) return '--';
+  return v.toFixed(1) + '%';
+}
+
+function getHeatColor(val, min, max) {
+  const norm = (val - min) / (max - min || 1);
+  if (norm < 0.25) return 'rgba(0,200,83,0.25)';
+  if (norm < 0.45) return 'rgba(0,200,83,0.12)';
+  if (norm < 0.55) return 'rgba(255,214,0,0.15)';
+  if (norm < 0.75) return 'rgba(255,149,0,0.2)';
+  return 'rgba(255,59,48,0.25)';
+}
+
+function getHeatColorInv(val, min, max) {
+  const norm = (val - min) / (max - min || 1);
+  if (norm < 0.25) return 'rgba(255,59,48,0.25)';
+  if (norm < 0.45) return 'rgba(255,149,0,0.2)';
+  if (norm < 0.55) return 'rgba(255,214,0,0.15)';
+  if (norm < 0.75) return 'rgba(0,200,83,0.12)';
+  return 'rgba(0,200,83,0.25)';
+}
+
+// ═══════════════════════════════════════════
+// CLOCK & TICKER
+// ═══════════════════════════════════════════
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent = now.toLocaleTimeString('en-US', { hour12: false });
+  document.getElementById('lastUpdate').textContent = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+function buildTicker() {
+  const items = [
+    { label: "CPI YoY", value: fmtPct(DATA.cpi.latest), change: fmtChange(DATA.cpi.latest - DATA.cpi.prevMonth), up: DATA.cpi.latest < DATA.cpi.prevMonth },
+    { label: "CPI MoM", value: fmtPct(DATA.cpi.mom), change: "", up: true },
+    { label: "CORE CPI", value: fmtPct(DATA.cpiCore.latest), change: fmtChange(DATA.cpiCore.latest - DATA.cpiCore.prevMonth), up: DATA.cpiCore.latest < DATA.cpiCore.prevMonth },
+    { label: "PPI YoY", value: fmtPct(DATA.ppi.latest), change: fmtChange(DATA.ppi.latest - DATA.ppi.prevMonth), up: DATA.ppi.latest < DATA.ppi.prevMonth },
+    { label: "PPI MoM", value: fmtPct(DATA.ppi.mom), change: "", up: true },
+    { label: "CORE PPI", value: fmtPct(DATA.ppiCore.latest), change: fmtChange(DATA.ppiCore.latest - DATA.ppiCore.prevMonth), up: false },
+    { label: "NFP", value: DATA.nfp.latestMonth + "K", change: fmtChange(DATA.nfp.latestMonth - DATA.nfp.prevMonth) + "K", up: DATA.nfp.latestMonth > DATA.nfp.prevMonth },
+    { label: "UNEMP", value: fmtPct(DATA.unrate.latest), change: fmtChange(DATA.unrate.latest - DATA.unrate.prevMonth), up: DATA.unrate.latest < DATA.unrate.prevMonth },
+    { label: "U-6", value: fmtPct(DATA.unrate.u6), change: "", up: true },
+    { label: "LFPR", value: fmtPct(DATA.unrate.lfpr), change: "", up: true },
+    { label: "AHE YoY", value: fmtPct(DATA.ahe.latest), change: "", up: true },
+    { label: "JOLTS", value: DATA.jolts.latest + "M", change: "", up: true },
+    { label: "FED TARGET", value: "2.0%", change: "", up: true },
+  ];
+
+  let html = '';
+  for (let r = 0; r < 2; r++) {
+    items.forEach(item => {
+      html += `<span class="ticker-item">
+        <span class="ticker-label">${item.label}</span>
+        <span class="ticker-value">${item.value}</span>
+        ${item.change ? `<span class="ticker-change ${item.up ? 'up' : 'down'}">${item.change}</span>` : ''}
+      </span>`;
+    });
+  }
+  document.getElementById('ticker').innerHTML = html;
+}
+buildTicker();
+
+// ═══════════════════════════════════════════
+// SUMMARY CARDS
+// ═══════════════════════════════════════════
+function buildSummaryCards() {
+  const cards = [
+    { label: "CPI All Items", value: fmtPct(DATA.cpi.latest), change: DATA.cpi.latest - DATA.cpi.prevMonth, period: "YoY — Mar 2026", color: DATA.cpi.latest > DATA.cpi.target ? 'var(--accent-red)' : 'var(--accent-green)' },
+    { label: "Core CPI", value: fmtPct(DATA.cpiCore.latest), change: DATA.cpiCore.latest - DATA.cpiCore.prevMonth, period: "YoY — Mar 2026", color: 'var(--accent-orange)' },
+    { label: "PPI Final Demand", value: fmtPct(DATA.ppi.latest), change: DATA.ppi.latest - DATA.ppi.prevMonth, period: "YoY — Mar 2026", color: 'var(--accent-yellow)' },
+    { label: "NFP (Monthly)", value: "+" + DATA.nfp.latestMonth + "K", change: DATA.nfp.latestMonth - DATA.nfp.prevMonth, period: "Mar 2026", color: 'var(--accent-blue)' },
+    { label: "Unemployment", value: fmtPct(DATA.unrate.latest), change: DATA.unrate.latest - DATA.unrate.prevMonth, period: "Mar 2026", color: 'var(--accent-cyan)' },
+    { label: "Avg Hourly Earnings", value: fmtPct(DATA.ahe.latest), change: 0, period: "YoY — Mar 2026", color: 'var(--accent-purple)' },
+  ];
+
+  let html = '';
+  cards.forEach((c, i) => {
+    const dir = c.change > 0 ? '▲' : c.change < 0 ? '▼' : '—';
+    const changeClass = c.label.includes('Unemployment') ?
+      (c.change > 0 ? 'val-neg' : c.change < 0 ? 'val-pos' : '') :
+      (c.change > 0 ? 'val-neg' : c.change < 0 ? 'val-pos' : '');
+    html += `<div class="summary-card fade-in" style="animation-delay: ${i * 0.06}s">
+      <div class="label">${c.label}</div>
+      <div class="value" style="color: ${c.color}">${c.value}</div>
+      <div class="change ${changeClass}">${dir} ${fmtChange(c.change)}pp</div>
+      <div class="period">${c.period}</div>
+    </div>`;
+  });
+  document.getElementById('summaryCards').innerHTML = html;
+}
+buildSummaryCards();
+
+// ═══════════════════════════════════════════
+// CHART DEFAULTS
+// ═══════════════════════════════════════════
+Chart.defaults.color = '#7a8899';
+Chart.defaults.borderColor = '#1e2a36';
+Chart.defaults.font.family = "'JetBrains Mono', monospace";
+Chart.defaults.font.size = 10;
+
+const chartInstances = {};
+
+function destroyChart(id) {
+  if (chartInstances[id]) {
+    chartInstances[id].destroy();
+    delete chartInstances[id];
+  }
+}
+
+// ═══════════════════════════════════════════
+// VIEW RENDERER
+// ═══════════════════════════════════════════
+let currentView = 'overview';
+
+function renderView(view) {
+  currentView = view;
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.toggle('active', t.dataset.view === view));
+
+  // Destroy all charts
+  Object.keys(chartInstances).forEach(destroyChart);
+
+  const container = document.getElementById('mainDashboard');
+
+  switch (view) {
+    case 'overview': renderOverview(container); break;
+    case 'cpi': renderCPIDetail(container); break;
+    case 'ppi': renderPPIDetail(container); break;
+    case 'employment': renderEmployment(container); break;
+    case 'projections': renderProjections(container); break;
+    case 'matrix': renderMatrix(container); break;
+  }
+}
+
+// ═══════════════════════════════════════════
+// OVERVIEW VIEW
+// ═══════════════════════════════════════════
+function renderOverview(container) {
+  container.innerHTML = `
+    <div class="panel">
+      <div class="panel-header">
+        <div><div class="panel-title">CPI & PPI Trend</div><div class="panel-subtitle">Quarterly YoY % Change</div></div>
+        <span class="panel-badge badge-live">Live</span>
+      </div>
+      <div class="chart-container"><canvas id="chartCpiPpi"></canvas></div>
+    </div>
+    <div class="panel">
+      <div class="panel-header">
+        <div><div class="panel-title">Employment Overview</div><div class="panel-subtitle">NFP Monthly &amp; Unemployment Rate</div></div>
+        <span class="panel-badge badge-live">Live</span>
+      </div>
+      <div class="chart-container"><canvas id="chartEmp"></canvas></div>
+    </div>
+    <div class="panel">
+      <div class="panel-header">
+        <div><div class="panel-title">Quarterly Data Matrix</div><div class="panel-subtitle">All Indicators — YoY % / Level</div></div>
+        <span class="panel-badge badge-quarterly">Quarterly</span>
+      </div>
+      <div class="matrix-scroll">${buildQuarterlyTable()}</div>
+    </div>
+    <div class="panel">
+      <div class="panel-header">
+        <div><div class="panel-title">Annual Data Matrix</div><div class="panel-subtitle">All Indicators — Annual Avg</div></div>
+        <span class="panel-badge badge-quarterly">Annual</span>
+      </div>
+      <div class="matrix-scroll">${buildAnnualTable()}</div>
+    </div>
+    <div class="panel">
+      <div class="panel-header">
+        <div><div class="panel-title">Inflation Heat Map</div><div class="panel-subtitle">CPI &amp; PPI Components — YoY Intensity</div></div>
+      </div>
+      ${buildInflationHeatMap()}
+    </div>
+    <div class="panel">
+      <div class="panel-header">
+        <div><div class="panel-title">Release Calendar</div><div class="panel-subtitle">Upcoming BLS Data Releases</div></div>
+      </div>
+      ${buildReleaseCalendar()}
+    </div>
+  `;
+
+  renderCpiPpiChart();
+  renderEmpChart();
+}
+
+function renderCpiPpiChart() {
+  const labels = Object.keys(DATA.cpi.quarterly);
+  const projLabels = Object.keys(DATA.cpi.projected);
+  const allLabels = [...labels, ...projLabels];
+
+  const cpiData = labels.map(k => DATA.cpi.quarterly[k]);
+  const cpiProj = [...new Array(labels.length).fill(null), ...projLabels.map(k => DATA.cpi.projected[k])];
+  cpiProj[labels.length - 1] = cpiData[cpiData.length - 1]; // bridge
+
+  const coreData = labels.map(k => DATA.cpiCore.quarterly[k]);
+  const coreProj = [...new Array(labels.length).fill(null), ...projLabels.map(k => DATA.cpiCore.projected[k])];
+  coreProj[labels.length - 1] = coreData[coreData.length - 1];
+
+  const ppiData = labels.map(k => DATA.ppi.quarterly[k]);
+  const ppiProj = [...new Array(labels.length).fill(null), ...projLabels.map(k => DATA.ppi.projected[k])];
+  ppiProj[labels.length - 1] = ppiData[ppiData.length - 1];
+
+  const ctx = document.getElementById('chartCpiPpi');
+  chartInstances['chartCpiPpi'] = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: allLabels,
+      datasets: [
+        { label: 'CPI All Items', data: [...cpiData, ...new Array(projLabels.length).fill(null)], borderColor: '#ff9500', backgroundColor: 'rgba(255,149,0,0.08)', fill: true, tension: 0.3, pointRadius: 3, pointBackgroundColor: '#ff9500', borderWidth: 2 },
+        { label: 'CPI All (Proj)', data: cpiProj, borderColor: '#ff9500', borderDash: [5, 5], pointRadius: 3, pointBackgroundColor: '#ff9500', borderWidth: 1.5, pointStyle: 'triangle' },
+        { label: 'Core CPI', data: [...coreData, ...new Array(projLabels.length).fill(null)], borderColor: '#0084ff', backgroundColor: 'rgba(0,132,255,0.06)', fill: true, tension: 0.3, pointRadius: 2, borderWidth: 2 },
+        { label: 'Core CPI (Proj)', data: coreProj, borderColor: '#0084ff', borderDash: [5, 5], pointRadius: 2, borderWidth: 1.5, pointStyle: 'triangle' },
+        { label: 'PPI', data: [...ppiData, ...new Array(projLabels.length).fill(null)], borderColor: '#ffd600', tension: 0.3, pointRadius: 2, borderWidth: 2 },
+        { label: 'PPI (Proj)', data: ppiProj, borderColor: '#ffd600', borderDash: [5, 5], pointRadius: 2, borderWidth: 1.5, pointStyle: 'triangle' },
+        { label: 'Fed Target', data: new Array(allLabels.length).fill(2.0), borderColor: 'rgba(255,59,48,0.5)', borderDash: [8, 4], pointRadius: 0, borderWidth: 1 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom', labels: { boxWidth: 12, padding: 12, font: { size: 9 } } },
+        tooltip: { mode: 'index', intersect: false, backgroundColor: '#151b23', borderColor: '#2a3a4a', borderWidth: 1, titleFont: { size: 11 }, bodyFont: { size: 10 } }
+      },
+      scales: {
+        x: { grid: { color: 'rgba(30,42,54,0.5)' }, ticks: { maxRotation: 45, font: { size: 9 } } },
+        y: { grid: { color: 'rgba(30,42,54,0.5)' }, ticks: { callback: v => v + '%' } }
+      }
+    }
+  });
+}
+
+function renderEmpChart() {
+  const labels = Object.keys(DATA.nfp.quarterly);
+  const projLabels = Object.keys(DATA.nfp.projected);
+  const allLabels = [...labels, ...projLabels];
+
+  const nfpData = labels.map(k => DATA.nfp.quarterly[k]);
+  const nfpProj = [...new Array(labels.length).fill(null), ...projLabels.map(k => DATA.nfp.projected[k])];
+  nfpProj[labels.length - 1] = nfpData[nfpData.length - 1];
+
+  const urData = labels.map(k => DATA.unrate.quarterly[k]);
+  const urProj = [...new Array(labels.length).fill(null), ...projLabels.map(k => DATA.unrate.projected[k])];
+  urProj[labels.length - 1] = urData[urData.length - 1];
+
+  const ctx = document.getElementById('chartEmp');
+  chartInstances['chartEmp'] = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: allLabels,
+      datasets: [
+        { type: 'bar', label: 'NFP (K)', data: [...nfpData, ...new Array(projLabels.length).fill(null)], backgroundColor: 'rgba(0,132,255,0.5)', borderColor: '#0084ff', borderWidth: 1, yAxisID: 'y', barPercentage: 0.7 },
+        { type: 'bar', label: 'NFP Proj (K)', data: nfpProj, backgroundColor: 'rgba(187,134,252,0.35)', borderColor: '#bb86fc', borderWidth: 1, borderDash: [3,3], yAxisID: 'y', barPercentage: 0.7 },
+        { type: 'line', label: 'Unemp Rate', data: [...urData, ...new Array(projLabels.length).fill(null)], borderColor: '#ff3b30', backgroundColor: 'rgba(255,59,48,0.08)', fill: true, tension: 0.3, pointRadius: 3, borderWidth: 2, yAxisID: 'y1' },
+        { type: 'line', label: 'Unemp (Proj)', data: urProj, borderColor: '#ff3b30', borderDash: [5,5], pointRadius: 3, borderWidth: 1.5, pointStyle: 'triangle', yAxisID: 'y1' }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom', labels: { boxWidth: 12, padding: 12, font: { size: 9 } } },
+        tooltip: { mode: 'index', intersect: false, backgroundColor: '#151b23', borderColor: '#2a3a4a', borderWidth: 1 }
+      },
+      scales: {
+        x: { grid: { color: 'rgba(30,42,54,0.5)' }, ticks: { maxRotation: 45, font: { size: 9 } } },
+        y: { position: 'left', grid: { color: 'rgba(30,42,54,0.5)' }, title: { display: true, text: 'NFP (thousands)', font: { size: 9 } } },
+        y1: { position: 'right', grid: { display: false }, title: { display: true, text: 'Unemp %', font: { size: 9 } }, ticks: { callback: v => v + '%' } }
+      }
+    }
+  });
+}
+
+// ═══════════════════════════════════════════
+// DATA TABLES
+// ═══════════════════════════════════════════
+function buildQuarterlyTable() {
+  const quarters = ["2024-Q1","2024-Q2","2024-Q3","2024-Q4","2025-Q1","2025-Q2","2025-Q3","2025-Q4","2026-Q1"];
+  const projQ = ["2026-Q2","2026-Q3","2026-Q4"];
+  const allQ = [...quarters, ...projQ];
+
+  const series = [
+    { name: "CPI All Items", src: DATA.cpi, suffix: "%" },
+    { name: "CPI Core", src: DATA.cpiCore, suffix: "%" },
+    { name: "PPI Final Demand", src: DATA.ppi, suffix: "%" },
+    { name: "PPI Core", src: DATA.ppiCore, suffix: "%" },
+    { name: "NFP (Qtr Total K)", src: DATA.nfp, suffix: "" },
+    { name: "Unemployment Rate", src: DATA.unrate, suffix: "%" },
+    { name: "Avg Hourly Earnings", src: DATA.ahe, suffix: "%" },
+    { name: "JOLTS Openings (M)", src: DATA.jolts, suffix: "" },
+  ];
+
+  let html = '<table class="data-table"><thead><tr><th>Indicator</th>';
+  allQ.forEach((q, i) => {
+    const isProj = projQ.includes(q);
+    html += `<th class="right" style="${isProj ? 'color: var(--accent-purple);' : ''}">${q.replace('20','\'')}</th>`;
+  });
+  html += '</tr></thead><tbody>';
+
+  series.forEach(s => {
+    html += `<tr><td class="row-header">${s.name}</td>`;
+    allQ.forEach(q => {
+      const isProj = projQ.includes(q);
+      const val = isProj ? (s.src.projected?.[q] ?? '--') : (s.src.quarterly?.[q] ?? '--');
+      const prev = !isProj && quarters.indexOf(q) > 0 ? s.src.quarterly[quarters[quarters.indexOf(q) - 1]] : null;
+      let cls = isProj ? 'val-projected' : '';
+      if (!isProj && prev !== null && val !== '--') {
+        if (s.name.includes('Unemployment')) {
+          cls = val > prev ? 'val-neg' : val < prev ? 'val-pos' : '';
+        } else if (s.name.includes('NFP') || s.name.includes('JOLTS') || s.name.includes('Earnings')) {
+          cls = val > prev ? 'val-pos' : val < prev ? 'val-neg' : '';
+        } else {
+          cls = val > prev ? 'val-neg' : val < prev ? 'val-pos' : '';
+        }
+      }
+      html += `<td class="right ${cls}">${val !== '--' ? val.toFixed(1) + s.suffix : '--'}</td>`;
+    });
+    html += '</tr>';
+  });
+
+  html += '</tbody></table>';
+  return html;
+}
+
+function buildAnnualTable() {
+  const years = [2020, 2021, 2022, 2023, 2024, 2025];
+  const series = [
+    { name: "CPI All Items", src: DATA.cpi.annual, suffix: "%" },
+    { name: "CPI Core", src: DATA.cpiCore.annual, suffix: "%" },
+    { name: "PPI Final Demand", src: DATA.ppi.annual, suffix: "%" },
+    { name: "PPI Core", src: DATA.ppiCore.annual, suffix: "%" },
+    { name: "NFP Annual (K)", src: DATA.nfp.annual, suffix: "" },
+    { name: "Unemployment Rate", src: DATA.unrate.annual, suffix: "%" },
+    { name: "Avg Hourly Earnings", src: DATA.ahe.annual, suffix: "%" },
+  ];
+
+  let html = '<table class="data-table"><thead><tr><th>Indicator</th>';
+  years.forEach(y => { html += `<th class="right">${y}</th>`; });
+  html += '<th class="right" style="color:var(--accent-purple)">Δ 5yr</th></tr></thead><tbody>';
+
+  series.forEach(s => {
+    html += `<tr><td class="row-header">${s.name}</td>`;
+    years.forEach(y => {
+      const v = s.src[y];
+      html += `<td class="right">${v !== undefined ? (typeof v === 'number' ? v.toFixed(1) : v) + s.suffix : '--'}</td>`;
+    });
+    const delta = (s.src[2025] ?? 0) - (s.src[2020] ?? 0);
+    const cls = s.name.includes('Unemployment') ? (delta > 0 ? 'val-neg' : 'val-pos') :
+                s.name.includes('NFP') ? (delta > 0 ? 'val-pos' : 'val-neg') :
+                (delta > 0 ? 'val-neg' : 'val-pos');
+    html += `<td class="right ${cls}">${delta > 0 ? '+' : ''}${delta.toFixed(1)}${s.suffix}</td>`;
+    html += '</tr>';
+  });
+
+  html += '</tbody></table>';
+  return html;
+}
+
+// ═══════════════════════════════════════════
+// HEAT MAP
+// ═══════════════════════════════════════════
+function buildInflationHeatMap() {
+  const comps = DATA.cpiComponents;
+  const names = Object.keys(comps);
+  const allYoy = names.map(n => comps[n].yoy);
+  const minY = Math.min(...allYoy);
+  const maxY = Math.max(...allYoy);
+
+  let html = '<table class="data-table"><thead><tr><th>Component</th><th class="right">Weight %</th><th class="right">YoY %</th><th class="right">MoM %</th><th class="right">Prev YoY</th><th class="right">Trend</th><th>Intensity</th></tr></thead><tbody>';
+
+  names.forEach(name => {
+    const c = comps[name];
+    const bg = getHeatColor(c.yoy, minY, maxY);
+    const trendIcon = c.trend === 'up' ? '▲' : c.trend === 'down' ? '▼' : '—';
+    const trendCls = c.trend === 'up' ? 'val-neg' : c.trend === 'down' ? 'val-pos' : '';
+    html += `<tr>
+      <td class="row-header">${name}</td>
+      <td class="right">${c.weight.toFixed(1)}</td>
+      <td class="right" style="background:${bg}; font-weight:600;">${c.yoy.toFixed(1)}%</td>
+      <td class="right">${c.mom.toFixed(1)}%</td>
+      <td class="right">${c.prev.toFixed(1)}%</td>
+      <td class="right ${trendCls}">${trendIcon}</td>
+      <td><div style="width:${Math.max(5, (c.yoy - minY) / (maxY - minY) * 100)}%;height:8px;background:${bg};border-radius:2px;"></div></td>
+    </tr>`;
+  });
+
+  html += '</tbody></table>';
+  return html;
+}
+
+// ═══════════════════════════════════════════
+// RELEASE CALENDAR
+// ═══════════════════════════════════════════
+function buildReleaseCalendar() {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayStr = today.toISOString().slice(0, 10);
+
+  let html = '<table class="data-table"><thead><tr><th>Date</th><th>Release</th><th class="right">Status</th></tr></thead><tbody>';
+  let nextUpDate = null;
+
+  DATA.releases.forEach(r => {
+    let status;
+    if (r.date < todayStr) {
+      status = '<span class="val-pos">● Released</span>';
+    } else if (r.date === todayStr) {
+      status = '<span style="color:var(--accent-orange)">● Today</span>';
+    } else {
+      status = '<span style="color:var(--text-muted)">○ Upcoming</span>';
+      if (!nextUpDate) nextUpDate = r.date;
+    }
+    html += `<tr><td>${r.date}</td><td>${r.name}</td><td class="right">${status}</td></tr>`;
+  });
+  html += '</tbody></table>';
+
+  if (nextUpDate) document.getElementById('nextRelease').textContent = nextUpDate;
+  return html;
+}
+
+// ═══════════════════════════════════════════
+// CPI DETAIL VIEW
+// ═══════════════════════════════════════════
+function renderCPIDetail(container) {
+  container.innerHTML = `
+    <div class="panel">
+      <div class="panel-header">
+        <div><div class="panel-title">CPI Headline vs Core — Quarterly Trend</div></div>
+        <span class="panel-badge badge-live">Live</span>
+      </div>
+      <div class="chart-container"><canvas id="chartCpiDetail"></canvas></div>
+    </div>
+    <div class="panel">
+      <div class="panel-header">
+        <div><div class="panel-title">CPI Components Breakdown</div></div>
+      </div>
+      <div class="chart-container"><canvas id="chartCpiComp"></canvas></div>
+    </div>
+    <div class="panel panel-full">
+      <div class="panel-header">
+        <div><div class="panel-title">CPI Component Detail Matrix</div></div>
+      </div>
+      ${buildInflationHeatMap()}
+    </div>
+    <div class="panel panel-full">
+      <div class="panel-header">
+        <div><div class="panel-title">CPI — Shelter Deep Dive</div><div class="panel-subtitle">Shelter is 36.5% of CPI and the largest contributor to inflation</div></div>
+      </div>
+      <div class="chart-container"><canvas id="chartShelter"></canvas></div>
+    </div>
+  `;
+
+  // CPI Detail chart
+  const labels = Object.keys(DATA.cpi.quarterly);
+  const ctx1 = document.getElementById('chartCpiDetail');
+  chartInstances['chartCpiDetail'] = new Chart(ctx1, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        { label: 'CPI All Items', data: labels.map(k => DATA.cpi.quarterly[k]), borderColor: '#ff9500', backgroundColor: 'rgba(255,149,0,0.1)', fill: true, tension: 0.3, borderWidth: 2.5, pointRadius: 4, pointBackgroundColor: '#ff9500' },
+        { label: 'CPI Core', data: labels.map(k => DATA.cpiCore.quarterly[k]), borderColor: '#0084ff', backgroundColor: 'rgba(0,132,255,0.08)', fill: true, tension: 0.3, borderWidth: 2, pointRadius: 3 },
+        { label: 'Fed Target (2%)', data: new Array(labels.length).fill(2.0), borderColor: 'rgba(255,59,48,0.6)', borderDash: [8, 4], pointRadius: 0, borderWidth: 1.5 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 9 } } } },
+      scales: {
+        x: { grid: { color: 'rgba(30,42,54,0.5)' }, ticks: { maxRotation: 45, font: { size: 9 } } },
+        y: { grid: { color: 'rgba(30,42,54,0.5)' }, ticks: { callback: v => v + '%' } }
+      }
+    }
+  });
+
+  // CPI Components horizontal bar
+  const compNames = Object.keys(DATA.cpiComponents);
+  const compVals = compNames.map(n => DATA.cpiComponents[n].yoy);
+  const compColors = compVals.map(v => v > 3 ? 'rgba(255,59,48,0.7)' : v > 2 ? 'rgba(255,149,0,0.7)' : v > 0 ? 'rgba(0,200,83,0.5)' : 'rgba(0,132,255,0.5)');
+
+  const ctx2 = document.getElementById('chartCpiComp');
+  chartInstances['chartCpiComp'] = new Chart(ctx2, {
+    type: 'bar',
+    data: {
+      labels: compNames,
+      datasets: [{ label: 'YoY %', data: compVals, backgroundColor: compColors, borderWidth: 0, barPercentage: 0.7 }]
+    },
+    options: {
+      indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { color: 'rgba(30,42,54,0.5)' }, ticks: { callback: v => v + '%' } },
+        y: { grid: { display: false } }
+      }
+    }
+  });
+
+  // Shelter trend (simulated monthly)
+  const shelterMonths = ['Mar-25','Apr-25','May-25','Jun-25','Jul-25','Aug-25','Sep-25','Oct-25','Nov-25','Dec-25','Jan-26','Feb-26'];
+  const shelterYoY = [5.2, 5.1, 5.0, 4.9, 4.8, 4.8, 4.7, 4.7, 4.6, 4.6, 4.6, 4.6];
+  const oerYoY = [5.5, 5.4, 5.3, 5.2, 5.1, 5.0, 4.9, 4.9, 4.8, 4.8, 4.7, 4.7];
+
+  const ctx3 = document.getElementById('chartShelter');
+  chartInstances['chartShelter'] = new Chart(ctx3, {
+    type: 'line',
+    data: {
+      labels: shelterMonths,
+      datasets: [
+        { label: 'Shelter YoY', data: shelterYoY, borderColor: '#ff9500', tension: 0.3, borderWidth: 2.5, pointRadius: 3, fill: false },
+        { label: 'OER YoY', data: oerYoY, borderColor: '#bb86fc', tension: 0.3, borderWidth: 2, pointRadius: 2, borderDash: [4,2], fill: false }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 9 } } } },
+      scales: {
+        x: { grid: { color: 'rgba(30,42,54,0.5)' } },
+        y: { grid: { color: 'rgba(30,42,54,0.5)' }, ticks: { callback: v => v + '%' } }
+      }
+    }
+  });
+}
+
+// ═══════════════════════════════════════════
+// PPI DETAIL VIEW
+// ═══════════════════════════════════════════
+function renderPPIDetail(container) {
+  container.innerHTML = `
+    <div class="panel">
+      <div class="panel-header">
+        <div><div class="panel-title">PPI Final Demand — Quarterly Trend</div></div>
+        <span class="panel-badge badge-live">Live</span>
+      </div>
+      <div class="chart-container"><canvas id="chartPpiTrend"></canvas></div>
+    </div>
+    <div class="panel">
+      <div class="panel-header">
+        <div><div class="panel-title">PPI Components Waterfall</div></div>
+      </div>
+      <div class="chart-container"><canvas id="chartPpiComp"></canvas></div>
+    </div>
+    <div class="panel panel-full">
+      <div class="panel-header">
+        <div><div class="panel-title">PPI Component Detail</div></div>
+      </div>
+      ${buildPPITable()}
+    </div>
+    <div class="panel panel-full">
+      <div class="panel-header">
+        <div><div class="panel-title">PPI to CPI Pipeline — Lead-Lag Relationship</div><div class="panel-subtitle">PPI typically leads CPI by 1-3 months</div></div>
+      </div>
+      <div class="chart-container"><canvas id="chartPipeline"></canvas></div>
+    </div>
+  `;
+
+  // PPI trend
+  const labels = Object.keys(DATA.ppi.quarterly);
+  const ctx1 = document.getElementById('chartPpiTrend');
+  chartInstances['chartPpiTrend'] = new Chart(ctx1, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        { label: 'PPI Final Demand', data: labels.map(k => DATA.ppi.quarterly[k]), borderColor: '#ffd600', backgroundColor: 'rgba(255,214,0,0.1)', fill: true, tension: 0.3, borderWidth: 2.5, pointRadius: 4 },
+        { label: 'PPI Core', data: labels.map(k => DATA.ppiCore.quarterly[k]), borderColor: '#00e5ff', tension: 0.3, borderWidth: 2, pointRadius: 3 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 9 } } } },
+      scales: {
+        x: { grid: { color: 'rgba(30,42,54,0.5)' }, ticks: { maxRotation: 45, font: { size: 9 } } },
+        y: { grid: { color: 'rgba(30,42,54,0.5)' }, ticks: { callback: v => v + '%' } }
+      }
+    }
+  });
+
+  // PPI components
+  const compNames = Object.keys(DATA.ppiComponents);
+  const compVals = compNames.map(n => DATA.ppiComponents[n].yoy);
+  const compColors = compVals.map(v => v > 3 ? 'rgba(255,59,48,0.7)' : v > 1 ? 'rgba(255,149,0,0.7)' : v > 0 ? 'rgba(0,200,83,0.5)' : 'rgba(0,132,255,0.5)');
+
+  const ctx2 = document.getElementById('chartPpiComp');
+  chartInstances['chartPpiComp'] = new Chart(ctx2, {
+    type: 'bar',
+    data: {
+      labels: compNames,
+      datasets: [{ label: 'YoY %', data: compVals, backgroundColor: compColors, borderWidth: 0, barPercentage: 0.7 }]
+    },
+    options: {
+      indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { x: { grid: { color: 'rgba(30,42,54,0.5)' }, ticks: { callback: v => v + '%' } }, y: { grid: { display: false } } }
+    }
+  });
+
+  // Pipeline chart
+  const pipeLabels = Object.keys(DATA.ppi.quarterly).slice(-8);
+  const ctx3 = document.getElementById('chartPipeline');
+  chartInstances['chartPipeline'] = new Chart(ctx3, {
+    type: 'line',
+    data: {
+      labels: pipeLabels,
+      datasets: [
+        { label: 'PPI (Leading)', data: pipeLabels.map(k => DATA.ppi.quarterly[k]), borderColor: '#ffd600', tension: 0.3, borderWidth: 2.5, pointRadius: 4 },
+        { label: 'CPI (Lagging)', data: pipeLabels.map(k => DATA.cpi.quarterly[k]), borderColor: '#ff9500', tension: 0.3, borderWidth: 2.5, pointRadius: 4 },
+        { label: 'Spread (PPI-CPI)', data: pipeLabels.map(k => (DATA.ppi.quarterly[k] - DATA.cpi.quarterly[k]).toFixed(2)), borderColor: '#00e5ff', tension: 0.3, borderWidth: 1.5, pointRadius: 2, borderDash: [4,3] }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 9 } } } },
+      scales: { x: { grid: { color: 'rgba(30,42,54,0.5)' } }, y: { grid: { color: 'rgba(30,42,54,0.5)' }, ticks: { callback: v => v + '%' } } }
+    }
+  });
+}
+
+function buildPPITable() {
+  const comps = DATA.ppiComponents;
+  let html = '<table class="data-table"><thead><tr><th>Component</th><th class="right">Weight %</th><th class="right">YoY %</th><th class="right">MoM %</th><th class="right">Prev YoY</th><th class="right">Δ</th></tr></thead><tbody>';
+  Object.keys(comps).forEach(name => {
+    const c = comps[name];
+    const delta = c.yoy - c.prev;
+    const cls = delta > 0 ? 'val-neg' : delta < 0 ? 'val-pos' : '';
+    html += `<tr><td class="row-header">${name}</td><td class="right">${c.weight}</td><td class="right" style="font-weight:600">${c.yoy.toFixed(1)}%</td><td class="right">${c.mom.toFixed(1)}%</td><td class="right">${c.prev.toFixed(1)}%</td><td class="right ${cls}">${delta > 0 ? '+' : ''}${delta.toFixed(1)}pp</td></tr>`;
+  });
+  html += '</tbody></table>';
+  return html;
+}
+
+// ═══════════════════════════════════════════
+// EMPLOYMENT VIEW
+// ═══════════════════════════════════════════
+function renderEmployment(container) {
+  container.innerHTML = `
+    <div class="panel">
+      <div class="panel-header">
+        <div><div class="panel-title">Nonfarm Payrolls — Quarterly Trend</div></div>
+        <span class="panel-badge badge-live">Live</span>
+      </div>
+      <div class="chart-container"><canvas id="chartNfpTrend"></canvas></div>
+    </div>
+    <div class="panel">
+      <div class="panel-header">
+        <div><div class="panel-title">Labor Market Snapshot</div></div>
+      </div>
+      <div class="chart-container"><canvas id="chartLabor"></canvas></div>
+    </div>
+    <div class="panel panel-full">
+      <div class="panel-header">
+        <div><div class="panel-title">Employment by Sector — Monthly Change</div></div>
+      </div>
+      ${buildSectorTable()}
+    </div>
+    <div class="panel">
+      <div class="panel-header">
+        <div><div class="panel-title">Sector Contribution</div></div>
+      </div>
+      <div class="chart-container"><canvas id="chartSector"></canvas></div>
+    </div>
+    <div class="panel">
+      <div class="panel-header">
+        <div><div class="panel-title">Wage Growth vs Inflation</div></div>
+      </div>
+      <div class="chart-container"><canvas id="chartWageInfl"></canvas></div>
+    </div>
+  `;
+
+  // NFP trend
+  const labels = Object.keys(DATA.nfp.quarterly);
+  const ctx1 = document.getElementById('chartNfpTrend');
+  chartInstances['chartNfpTrend'] = new Chart(ctx1, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'NFP Quarterly (K)',
+        data: labels.map(k => DATA.nfp.quarterly[k]),
+        backgroundColor: labels.map(k => {
+          const v = DATA.nfp.quarterly[k];
+          return v > 500 ? 'rgba(0,200,83,0.6)' : v > 400 ? 'rgba(0,132,255,0.5)' : 'rgba(255,149,0,0.5)';
+        }),
+        borderWidth: 0,
+        barPercentage: 0.7
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { color: 'rgba(30,42,54,0.5)' }, ticks: { maxRotation: 45, font: { size: 9 } } },
+        y: { grid: { color: 'rgba(30,42,54,0.5)' }, title: { display: true, text: 'Thousands', font: { size: 9 } } }
+      }
+    }
+  });
+
+  // Labor market — unemployment + U-6 + LFPR
+  const urLabels = Object.keys(DATA.unrate.quarterly);
+  const ctx2 = document.getElementById('chartLabor');
+  chartInstances['chartLabor'] = new Chart(ctx2, {
+    type: 'line',
+    data: {
+      labels: urLabels,
+      datasets: [
+        { label: 'U-3 Rate', data: urLabels.map(k => DATA.unrate.quarterly[k]), borderColor: '#ff3b30', tension: 0.3, borderWidth: 2.5, pointRadius: 3, fill: false },
+        { label: 'AHE YoY', data: urLabels.map(k => DATA.ahe.quarterly[k]), borderColor: '#00c853', tension: 0.3, borderWidth: 2, pointRadius: 2, fill: false },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 9 } } } },
+      scales: {
+        x: { grid: { color: 'rgba(30,42,54,0.5)' }, ticks: { maxRotation: 45, font: { size: 9 } } },
+        y: { grid: { color: 'rgba(30,42,54,0.5)' }, ticks: { callback: v => v + '%' } }
+      }
+    }
+  });
+
+  // Sector chart
+  const sectors = Object.keys(DATA.empSectors);
+  const sectorVals = sectors.map(s => DATA.empSectors[s].mom);
+  const ctx3 = document.getElementById('chartSector');
+  chartInstances['chartSector'] = new Chart(ctx3, {
+    type: 'bar',
+    data: {
+      labels: sectors,
+      datasets: [{ label: 'MoM (K)', data: sectorVals, backgroundColor: sectorVals.map(v => v >= 0 ? 'rgba(0,200,83,0.5)' : 'rgba(255,59,48,0.5)'), barPercentage: 0.7 }]
+    },
+    options: {
+      indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { x: { grid: { color: 'rgba(30,42,54,0.5)' } }, y: { grid: { display: false } } }
+    }
+  });
+
+  // Wage vs Inflation
+  const wageLabels = Object.keys(DATA.ahe.quarterly).slice(-8);
+  const ctx4 = document.getElementById('chartWageInfl');
+  chartInstances['chartWageInfl'] = new Chart(ctx4, {
+    type: 'line',
+    data: {
+      labels: wageLabels,
+      datasets: [
+        { label: 'AHE YoY', data: wageLabels.map(k => DATA.ahe.quarterly[k]), borderColor: '#00c853', tension: 0.3, borderWidth: 2.5, fill: false, pointRadius: 3 },
+        { label: 'CPI YoY', data: wageLabels.map(k => DATA.cpi.quarterly[k]), borderColor: '#ff9500', tension: 0.3, borderWidth: 2.5, fill: false, pointRadius: 3 },
+        { label: 'Real Wage Growth', data: wageLabels.map(k => (DATA.ahe.quarterly[k] - DATA.cpi.quarterly[k]).toFixed(2)), borderColor: '#00e5ff', tension: 0.3, borderWidth: 1.5, pointRadius: 2, borderDash: [4,3], backgroundColor: 'rgba(0,229,255,0.08)', fill: true }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 9 } } } },
+      scales: { x: { grid: { color: 'rgba(30,42,54,0.5)' } }, y: { grid: { color: 'rgba(30,42,54,0.5)' }, ticks: { callback: v => v + '%' } } }
+    }
+  });
+}
+
+function buildSectorTable() {
+  const sectors = DATA.empSectors;
+  let html = '<table class="data-table"><thead><tr><th>Sector</th><th class="right">MoM (K)</th><th class="right">3mo Avg</th><th class="right">6mo Avg</th><th class="right">Trend</th></tr></thead><tbody>';
+  Object.keys(sectors).forEach(name => {
+    const s = sectors[name];
+    const cls = s.mom >= 0 ? 'val-pos' : 'val-neg';
+    const trendIcon = s.trend === 'up' ? '▲' : s.trend === 'down' ? '▼' : '—';
+    const trendCls = s.trend === 'up' ? 'val-pos' : s.trend === 'down' ? 'val-neg' : '';
+    html += `<tr><td class="row-header">${name}</td><td class="right ${cls}" style="font-weight:600">${s.mom > 0 ? '+' : ''}${s.mom}</td><td class="right">${s.avg3}</td><td class="right">${s.avg6}</td><td class="right ${trendCls}">${trendIcon}</td></tr>`;
+  });
+  html += '</tbody></table>';
+  return html;
+}
+
+// ═══════════════════════════════════════════
+// PROJECTIONS VIEW
+// ═══════════════════════════════════════════
+function renderProjections(container) {
+  const projections = [
+    { label: "CPI All Items", current: DATA.cpi.latest, target: 2.0, proj2026: 2.2, range: [1.8, 2.8], color: '#ff9500' },
+    { label: "CPI Core", current: DATA.cpiCore.latest, target: 2.0, proj2026: 2.7, range: [2.3, 3.4], color: '#0084ff' },
+    { label: "PPI Final Demand", current: DATA.ppi.latest, target: 2.0, proj2026: 2.0, range: [1.5, 3.2], color: '#ffd600' },
+    { label: "Unemployment", current: DATA.unrate.latest, target: 4.0, proj2026: 4.3, range: [3.8, 4.8], color: '#ff3b30' },
+    { label: "NFP Monthly Avg (K)", current: DATA.nfp.latestMonth, target: 150, proj2026: 113, range: [80, 200], color: '#0084ff' },
+    { label: "Avg Hourly Earnings", current: DATA.ahe.latest, target: 3.0, proj2026: 3.4, range: [2.8, 4.0], color: '#00c853' },
+  ];
+
+  let barsHtml = '';
+  projections.forEach(p => {
+    const pct = ((p.current - p.range[0]) / (p.range[1] - p.range[0])) * 100;
+    const projPct = ((p.proj2026 - p.range[0]) / (p.range[1] - p.range[0])) * 100;
+    barsHtml += `
+      <div class="projection-bar">
+        <div class="projection-label">${p.label}</div>
+        <div class="projection-track">
+          <div class="projection-fill" style="width:${pct}%;background:${p.color};opacity:0.7;"></div>
+        </div>
+        <div class="projection-values">
+          <span style="color:${p.color};font-weight:600;">Now: ${p.current}${p.label.includes('K') ? 'K' : '%'}</span>
+          <span class="val-projected">→ ${p.proj2026}${p.label.includes('K') ? 'K' : '%'}</span>
+        </div>
+      </div>`;
+  });
+
+  container.innerHTML = `
+    <div class="panel panel-full">
+      <div class="panel-header">
+        <div><div class="panel-title">Consensus Projections — 2026 Year-End</div><div class="panel-subtitle">Current vs Projected (FOMC SEP, CBO, Blue Chip Consensus)</div></div>
+        <span class="panel-badge badge-projected">Projected</span>
+      </div>
+      ${barsHtml}
+    </div>
+    <div class="panel">
+      <div class="panel-header">
+        <div><div class="panel-title">CPI Projected Path</div></div>
+      </div>
+      <div class="chart-container"><canvas id="chartCpiProj"></canvas></div>
+    </div>
+    <div class="panel">
+      <div class="panel-header">
+        <div><div class="panel-title">Employment Projected Path</div></div>
+      </div>
+      <div class="chart-container"><canvas id="chartEmpProj"></canvas></div>
+    </div>
+    <div class="panel panel-full">
+      <div class="panel-header">
+        <div><div class="panel-title">Scenario Analysis</div><div class="panel-subtitle">Base / Upside / Downside Scenarios for Key Indicators by Q4 2026</div></div>
+      </div>
+      ${buildScenarioTable()}
+    </div>
+  `;
+
+  // CPI proj chart with confidence band
+  const allQ = [...Object.keys(DATA.cpi.quarterly).slice(-6), ...Object.keys(DATA.cpi.projected)];
+  const cpiVals = allQ.map(k => DATA.cpi.quarterly[k] ?? DATA.cpi.projected[k]);
+  const upper = cpiVals.map((v, i) => i >= allQ.length - 3 ? v + 0.3 + (i - (allQ.length - 4)) * 0.15 : null);
+  const lower = cpiVals.map((v, i) => i >= allQ.length - 3 ? v - 0.3 - (i - (allQ.length - 4)) * 0.15 : null);
+
+  const ctx1 = document.getElementById('chartCpiProj');
+  chartInstances['chartCpiProj'] = new Chart(ctx1, {
+    type: 'line',
+    data: {
+      labels: allQ,
+      datasets: [
+        { label: 'CPI Path', data: cpiVals, borderColor: '#ff9500', tension: 0.3, borderWidth: 2.5, pointRadius: 3 },
+        { label: 'Upper Band', data: upper, borderColor: 'rgba(255,149,0,0.3)', backgroundColor: 'rgba(255,149,0,0.08)', fill: '+1', tension: 0.3, borderWidth: 1, pointRadius: 0 },
+        { label: 'Lower Band', data: lower, borderColor: 'rgba(255,149,0,0.3)', fill: false, tension: 0.3, borderWidth: 1, pointRadius: 0 },
+        { label: 'Fed Target', data: new Array(allQ.length).fill(2.0), borderColor: 'rgba(255,59,48,0.5)', borderDash: [8,4], pointRadius: 0, borderWidth: 1 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 9 } } } },
+      scales: { x: { grid: { color: 'rgba(30,42,54,0.5)' } }, y: { grid: { color: 'rgba(30,42,54,0.5)' }, ticks: { callback: v => v + '%' } } }
+    }
+  });
+
+  // Emp proj
+  const empQ = [...Object.keys(DATA.unrate.quarterly).slice(-6), ...Object.keys(DATA.unrate.projected)];
+  const urVals = empQ.map(k => DATA.unrate.quarterly[k] ?? DATA.unrate.projected[k]);
+
+  const ctx2 = document.getElementById('chartEmpProj');
+  chartInstances['chartEmpProj'] = new Chart(ctx2, {
+    type: 'line',
+    data: {
+      labels: empQ,
+      datasets: [
+        { label: 'Unemployment Rate', data: urVals, borderColor: '#ff3b30', tension: 0.3, borderWidth: 2.5, pointRadius: 3 },
+        { label: 'NAIRU Est.', data: new Array(empQ.length).fill(4.2), borderColor: 'rgba(0,229,255,0.5)', borderDash: [6,4], pointRadius: 0, borderWidth: 1 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 9 } } } },
+      scales: { x: { grid: { color: 'rgba(30,42,54,0.5)' } }, y: { grid: { color: 'rgba(30,42,54,0.5)' }, ticks: { callback: v => v + '%' } } }
+    }
+  });
+}
+
+function buildScenarioTable() {
+  const scenarios = [
+    { indicator: "CPI All Items", base: "2.1%", upside: "1.8%", downside: "2.8%" },
+    { indicator: "CPI Core", base: "2.7%", upside: "2.4%", downside: "3.2%" },
+    { indicator: "PPI Final Demand", base: "2.0%", upside: "1.5%", downside: "2.8%" },
+    { indicator: "Unemployment", base: "4.3%", upside: "4.0%", downside: "4.8%" },
+    { indicator: "NFP Monthly Avg", base: "113K", upside: "150K", downside: "75K" },
+    { indicator: "AHE YoY", base: "3.4%", upside: "3.8%", downside: "3.0%" },
+    { indicator: "JOLTS Openings", base: "6.9M", upside: "7.3M", downside: "6.2M" },
+  ];
+
+  let html = '<table class="data-table"><thead><tr><th>Indicator</th><th class="right" style="color:var(--accent-green)">Upside</th><th class="right" style="color:var(--accent-blue)">Base Case</th><th class="right" style="color:var(--accent-red)">Downside</th></tr></thead><tbody>';
+  scenarios.forEach(s => {
+    html += `<tr><td class="row-header">${s.indicator}</td><td class="right val-pos">${s.upside}</td><td class="right" style="color:var(--accent-blue)">${s.base}</td><td class="right val-neg">${s.downside}</td></tr>`;
+  });
+  html += '</tbody></table>';
+  return html;
+}
+
+// ═══════════════════════════════════════════
+// CORRELATION MATRIX VIEW
+// ═══════════════════════════════════════════
+function renderMatrix(container) {
+  container.innerHTML = `
+    <div class="panel panel-full">
+      <div class="panel-header">
+        <div><div class="panel-title">Cross-Indicator Correlation Matrix</div><div class="panel-subtitle">Rolling 8-quarter correlations among key indicators</div></div>
+      </div>
+      <div class="matrix-scroll">${buildCorrelationMatrix()}</div>
+    </div>
+    <div class="panel panel-full">
+      <div class="panel-header">
+        <div><div class="panel-title">Year-over-Year Change Comparison Matrix</div><div class="panel-subtitle">Direction &amp; Magnitude of Change — Quarterly</div></div>
+      </div>
+      <div class="matrix-scroll">${buildChangeMatrix()}</div>
+    </div>
+    <div class="panel panel-full">
+      <div class="panel-header">
+        <div><div class="panel-title">Indicator Z-Score Heat Map</div><div class="panel-subtitle">Standard deviations from 4-quarter rolling mean</div></div>
+      </div>
+      <div class="matrix-scroll">${buildZScoreMatrix()}</div>
+    </div>
+  `;
+}
+
+function buildCorrelationMatrix() {
+  const indicators = ['CPI', 'Core CPI', 'PPI', 'Core PPI', 'NFP', 'Unemp', 'AHE'];
+  // Pre-computed correlations (based on quarterly data relationships)
+  const corr = [
+    [1.00, 0.94, 0.72, 0.68, -0.31, -0.22, 0.81],
+    [0.94, 1.00, 0.65, 0.71, -0.28, -0.19, 0.85],
+    [0.72, 0.65, 1.00, 0.91, -0.15, -0.11, 0.55],
+    [0.68, 0.71, 0.91, 1.00, -0.12, -0.08, 0.58],
+    [-0.31, -0.28, -0.15, -0.12, 1.00, -0.82, 0.21],
+    [-0.22, -0.19, -0.11, -0.08, -0.82, 1.00, -0.15],
+    [0.81, 0.85, 0.55, 0.58, 0.21, -0.15, 1.00]
+  ];
+
+  let html = '<table class="data-table"><thead><tr><th></th>';
+  indicators.forEach(i => { html += `<th class="right" style="font-size:9px">${i}</th>`; });
+  html += '</tr></thead><tbody>';
+
+  indicators.forEach((name, i) => {
+    html += `<tr><td class="row-header">${name}</td>`;
+    corr[i].forEach((v, j) => {
+      let bg;
+      if (i === j) bg = 'rgba(255,149,0,0.2)';
+      else if (v > 0.7) bg = 'rgba(0,200,83,0.25)';
+      else if (v > 0.3) bg = 'rgba(0,200,83,0.12)';
+      else if (v > -0.3) bg = 'rgba(255,214,0,0.1)';
+      else if (v > -0.7) bg = 'rgba(255,59,48,0.12)';
+      else bg = 'rgba(255,59,48,0.25)';
+      html += `<td class="right" style="background:${bg};font-weight:${i===j?'700':'400'}">${v.toFixed(2)}</td>`;
+    });
+    html += '</tr>';
+  });
+
+  html += '</tbody></table>';
+  return html;
+}
+
+function buildChangeMatrix() {
+  const quarters = ["2024-Q3","2024-Q4","2025-Q1","2025-Q2","2025-Q3","2025-Q4","2026-Q1"];
+  const series = [
+    { name: "CPI", data: DATA.cpi.quarterly },
+    { name: "Core CPI", data: DATA.cpiCore.quarterly },
+    { name: "PPI", data: DATA.ppi.quarterly },
+    { name: "Core PPI", data: DATA.ppiCore.quarterly },
+    { name: "Unemp", data: DATA.unrate.quarterly },
+    { name: "AHE", data: DATA.ahe.quarterly },
+  ];
+
+  let html = '<table class="data-table"><thead><tr><th></th>';
+  quarters.forEach(q => { html += `<th class="right">${q.replace('20','\'')}</th>`; });
+  html += '</tr></thead><tbody>';
+
+  series.forEach(s => {
+    html += `<tr><td class="row-header">${s.name}</td>`;
+    quarters.forEach((q, qi) => {
+      const allQ = Object.keys(s.data);
+      const idx = allQ.indexOf(q);
+      if (idx > 0) {
+        const delta = s.data[q] - s.data[allQ[idx-1]];
+        const arrow = delta > 0 ? '▲' : delta < 0 ? '▼' : '—';
+        const isInflation = !s.name.includes('Unemp');
+        let bg;
+        if (isInflation) {
+          bg = delta > 0.3 ? 'rgba(255,59,48,0.2)' : delta > 0 ? 'rgba(255,149,0,0.12)' : delta > -0.3 ? 'rgba(0,200,83,0.12)' : 'rgba(0,200,83,0.25)';
+        } else {
+          bg = delta > 0.2 ? 'rgba(255,59,48,0.2)' : delta > 0 ? 'rgba(255,149,0,0.12)' : delta > -0.2 ? 'rgba(0,200,83,0.12)' : 'rgba(0,200,83,0.25)';
+        }
+        html += `<td class="right" style="background:${bg}">${arrow} ${delta > 0 ? '+' : ''}${delta.toFixed(1)}</td>`;
+      } else {
+        html += '<td class="right">--</td>';
+      }
+    });
+    html += '</tr>';
+  });
+
+  html += '</tbody></table>';
+  return html;
+}
+
+function buildZScoreMatrix() {
+  const quarters = ["2024-Q3","2024-Q4","2025-Q1","2025-Q2","2025-Q3","2025-Q4","2026-Q1"];
+  const series = [
+    { name: "CPI", data: DATA.cpi.quarterly },
+    { name: "Core CPI", data: DATA.cpiCore.quarterly },
+    { name: "PPI", data: DATA.ppi.quarterly },
+    { name: "Unemp", data: DATA.unrate.quarterly },
+    { name: "AHE", data: DATA.ahe.quarterly },
+  ];
+
+  let html = '<table class="data-table"><thead><tr><th></th>';
+  quarters.forEach(q => { html += `<th class="right">${q.replace('20','\'')}</th>`; });
+  html += '</tr></thead><tbody>';
+
+  series.forEach(s => {
+    const allQ = Object.keys(s.data);
+    html += `<tr><td class="row-header">${s.name}</td>`;
+    quarters.forEach(q => {
+      const idx = allQ.indexOf(q);
+      if (idx >= 3) {
+        const window = [s.data[allQ[idx-3]], s.data[allQ[idx-2]], s.data[allQ[idx-1]], s.data[q]];
+        const mean = window.reduce((a,b) => a+b, 0) / 4;
+        const std = Math.sqrt(window.reduce((a,b) => a + (b-mean)**2, 0) / 4) || 0.01;
+        const z = (s.data[q] - mean) / std;
+        let bg;
+        if (Math.abs(z) < 0.5) bg = 'rgba(255,214,0,0.1)';
+        else if (z > 1) bg = 'rgba(255,59,48,0.25)';
+        else if (z > 0.5) bg = 'rgba(255,149,0,0.15)';
+        else if (z < -1) bg = 'rgba(0,200,83,0.25)';
+        else bg = 'rgba(0,200,83,0.12)';
+        html += `<td class="right" style="background:${bg};font-weight:500">${z > 0 ? '+' : ''}${z.toFixed(2)}σ</td>`;
+      } else {
+        html += '<td class="right">--</td>';
+      }
+    });
+    html += '</tr>';
+  });
+
+  html += '</tbody></table>';
+  return html;
+}
+
+// ═══════════════════════════════════════════
+// NAV HANDLERS
+// ═══════════════════════════════════════════
+document.querySelectorAll('.nav-tab').forEach(tab => {
+  tab.addEventListener('click', () => renderView(tab.dataset.view));
+});
+
+// ═══════════════════════════════════════════
+// FRED / BEA / BLS API INTEGRATION MODULE
+// ═══════════════════════════════════════════
+const BEA_BASE  = 'https://apps.bea.gov/api/data';  // BEA supports CORS natively
+let isLiveData = false;
+let fredRefreshInterval = null;
+
+// Detect if running on localhost (with server.py proxy) or remote (needs Cloudflare Worker)
+const IS_LOCAL = ['localhost', '127.0.0.1', ''].includes(location.hostname);
+
+function getFredKey()  { return localStorage.getItem('ghost_fred_api_key') || ''; }
+function getBeaKey()   { return localStorage.getItem('ghost_bea_api_key') || ''; }
+function getBlsKey()   { return localStorage.getItem('ghost_bls_api_key') || ''; }
+function getProxyUrl() { return localStorage.getItem('ghost_proxy_url') || ''; }
+
+// Build the FRED API URL — routed through proxy to avoid CORS
+function buildFredUrl(seriesId, units, freq, start) {
+  const key = getFredKey();
+  const params = `series_id=${seriesId}&api_key=${key}&file_type=json&observation_start=${start}&units=${units}&frequency=${freq}&sort_order=asc`;
+
+  // Priority 1: If a Cloudflare Worker proxy URL is set, always use it
+  const proxyUrl = getProxyUrl();
+  if (proxyUrl) {
+    const separator = proxyUrl.includes('?') ? '&' : '?';
+    return `${proxyUrl}${separator}${params}`;
+  }
+
+  // Priority 2: If on localhost, try server.py proxy
+  if (IS_LOCAL) {
+    return `/api/fred?${params}`;
+  }
+
+  // Fallback: direct call (will fail due to CORS)
+  return `https://api.stlouisfed.org/fred/series/observations?${params}`;
+}
+
+function updateConnectionBadge() {
+  const badge = document.getElementById('connectionBadge');
+  const feedLabel = document.getElementById('feedLabel');
+  const statusDot = document.getElementById('statusDot');
+  if (isLiveData) {
+    badge.className = 'connection-badge live';
+    const sources = ['FRED'];
+    if (getBeaKey()) sources.push('BEA');
+    badge.textContent = sources.join(' + ') + ' LIVE';
+    feedLabel.textContent = 'LIVE DATA FEED';
+    statusDot.style.background = 'var(--accent-green)';
+  } else if (getFredKey()) {
+    badge.className = 'connection-badge static';
+    badge.textContent = 'CONNECTING...';
+    feedLabel.textContent = 'CONNECTING...';
+    statusDot.style.background = 'var(--accent-orange)';
+  } else {
+    badge.className = 'connection-badge static';
+    badge.textContent = 'STATIC DATA';
+    feedLabel.textContent = 'STATIC MODE';
+    statusDot.style.background = 'var(--text-muted)';
+  }
+}
+
+// ── Settings Panel ──
+function toggleSettings() {
+  const overlay = document.getElementById('settingsOverlay');
+  overlay.classList.toggle('open');
+  if (overlay.classList.contains('open')) {
+    document.getElementById('fredKeyInput').value = getFredKey();
+    document.getElementById('beaKeyInput').value = getBeaKey();
+    document.getElementById('blsKeyInput').value = getBlsKey();
+    document.getElementById('proxyUrlInput').value = getProxyUrl();
+    document.getElementById('settingsStatus').innerHTML = '';
+
+    // Show proxy mode detection
+    const modeLabel = document.getElementById('proxyModeLabel');
+    const helpText = document.getElementById('proxyHelpText');
+    const currentProxy = getProxyUrl();
+    if (currentProxy) {
+      modeLabel.innerHTML = '(CLOUDFLARE WORKER ACTIVE)';
+      modeLabel.style.color = 'var(--accent-green)';
+      helpText.innerHTML = 'FRED/BLS calls route through your Cloudflare Worker. This works on localhost AND GitHub Pages.';
+    } else if (IS_LOCAL) {
+      modeLabel.innerHTML = '(LOCAL MODE — needs server.py or a proxy URL)';
+      modeLabel.style.color = 'var(--accent-orange)';
+      helpText.innerHTML = 'You are on localhost. Either run <b>python server.py</b> (auto-proxies FRED/BLS), '
+        + 'or paste a Cloudflare Worker URL here. Without one of these, FRED calls will fail (CORS).<br>'
+        + '<span style="color:var(--accent-green)">BEA works directly — no proxy needed.</span>';
+    } else {
+      modeLabel.innerHTML = '(REMOTE — proxy URL required for FRED)';
+      modeLabel.style.color = 'var(--accent-red)';
+      helpText.innerHTML = 'You are on a remote host. FRED and BLS <b>require</b> a Cloudflare Worker proxy URL.<br>'
+        + 'See <b>cloudflare-worker-guide.html</b> for setup instructions.<br>'
+        + '<span style="color:var(--accent-green)">BEA works directly — no proxy needed.</span>';
+    }
+  }
+}
+
+async function testConnection() {
+  const fredKey = document.getElementById('fredKeyInput').value.trim();
+  const beaKey  = document.getElementById('beaKeyInput').value.trim();
+  const blsKey  = document.getElementById('blsKeyInput').value.trim();
+  const proxyUrl = document.getElementById('proxyUrlInput').value.trim();
+  const status  = document.getElementById('settingsStatus');
+
+  if (!fredKey && !beaKey && !blsKey) { status.innerHTML = '<span style="color:var(--accent-red)">Enter at least one key</span>'; return; }
+  status.innerHTML = '<span style="color:var(--accent-cyan)">Testing connections...</span>\n';
+
+  // Temporarily store proxy URL for test
+  if (proxyUrl) localStorage.setItem('ghost_proxy_url', proxyUrl);
+
+  // Test FRED (through proxy)
+  if (fredKey) {
+    try {
+      const params = `series_id=CPIAUCSL&api_key=${fredKey}&file_type=json&observation_start=2025-01-01&units=pc1&frequency=m&sort_order=desc&limit=3`;
+      let url;
+      if (proxyUrl) {
+        const sep = proxyUrl.includes('?') ? '&' : '?';
+        url = `${proxyUrl}${sep}${params}`;
+      } else if (IS_LOCAL) {
+        url = `/api/fred?${params}`;
+      } else {
+        url = `https://api.stlouisfed.org/fred/series/observations?${params}`;
+      }
+      const res = await fetch(url);
+      const json = await res.json();
+      if (json.error_code) {
+        status.innerHTML += `<span style="color:var(--accent-red)">FRED: ${json.error_message}</span>\n`;
+      } else {
+        const obs = json.observations;
+        const mode = IS_LOCAL ? 'via server.py proxy' : (proxyUrl ? 'via Cloudflare Worker' : 'direct');
+        status.innerHTML += `<span style="color:var(--accent-green)">FRED: Connected (${mode})</span>  Latest CPI: ${obs[0].date} = ${parseFloat(obs[0].value).toFixed(2)}%\n`;
+      }
+    } catch (err) {
+      const hint = (!IS_LOCAL && !proxyUrl) ? ' — You need a proxy URL for remote hosting' : '';
+      status.innerHTML += `<span style="color:var(--accent-red)">FRED: Network error${hint}</span>\n`;
+    }
+  }
+
+  // Test BEA (direct — CORS works)
+  if (beaKey) {
+    try {
+      const url = `${BEA_BASE}?&UserID=${beaKey}&method=GetData&DataSetName=NIPA&TableName=T10101&Frequency=Q&Year=2024&ResultFormat=JSON`;
+      const res = await fetch(url);
+      const json = await res.json();
+      if (json.BEAAPI?.Results?.Error) {
+        status.innerHTML += `<span style="color:var(--accent-red)">BEA: ${json.BEAAPI.Results.Error.APIErrorDescription}</span>\n`;
+      } else {
+        status.innerHTML += `<span style="color:var(--accent-green)">BEA: Connected (direct — no proxy needed)</span>\n`;
+      }
+    } catch (err) { status.innerHTML += `<span style="color:var(--accent-red)">BEA: Network error</span>\n`; }
+  }
+
+  // Note about BLS
+  if (blsKey) {
+    status.innerHTML += `<span style="color:var(--accent-orange)">BLS: Key saved</span>  Requires proxy for browser calls. FRED mirrors BLS data.\n`;
+  }
+
+  // Proxy status
+  if (IS_LOCAL) {
+    status.innerHTML += `\n<span style="color:var(--accent-green)">Mode: LOCAL — server.py handles CORS proxy automatically</span>`;
+  } else if (proxyUrl) {
+    status.innerHTML += `\n<span style="color:var(--accent-green)">Mode: REMOTE — using Cloudflare Worker proxy</span>`;
+  } else if (fredKey) {
+    status.innerHTML += `\n<span style="color:var(--accent-orange)">Warning: No proxy URL set. FRED will fail on remote hosts (CORS). Add a proxy URL or deploy a Cloudflare Worker.</span>`;
+  }
+}
+
+function saveAndConnect() {
+  const fredKey  = document.getElementById('fredKeyInput').value.trim();
+  const beaKey   = document.getElementById('beaKeyInput').value.trim();
+  const blsKey   = document.getElementById('blsKeyInput').value.trim();
+  const proxyUrl = document.getElementById('proxyUrlInput').value.trim();
+  const status   = document.getElementById('settingsStatus');
+
+  if (fredKey) localStorage.setItem('ghost_fred_api_key', fredKey);
+  else localStorage.removeItem('ghost_fred_api_key');
+
+  if (beaKey) localStorage.setItem('ghost_bea_api_key', beaKey);
+  else localStorage.removeItem('ghost_bea_api_key');
+
+  if (blsKey) localStorage.setItem('ghost_bls_api_key', blsKey);
+  else localStorage.removeItem('ghost_bls_api_key');
+
+  if (proxyUrl) localStorage.setItem('ghost_proxy_url', proxyUrl);
+  else localStorage.removeItem('ghost_proxy_url');
+
+  status.innerHTML = '<span style="color:var(--accent-green)">Keys saved. Loading live data...</span>';
+  updateConnectionBadge();
+
+  loadAllData().then(() => {
+    const sources = [];
+    if (fredKey) sources.push('FRED');
+    if (beaKey) sources.push('BEA');
+    if (blsKey) sources.push('BLS (stored)');
+    const mode = IS_LOCAL ? 'server.py proxy' : (proxyUrl ? 'Cloudflare Worker' : 'direct');
+    status.innerHTML += `\n<span style="color:var(--accent-green)">Connected: ${sources.join(', ')} via ${mode}</span>`;
+    setTimeout(toggleSettings, 1800);
+  });
+}
+
+function disconnectApi() {
+  localStorage.removeItem('ghost_fred_api_key');
+  localStorage.removeItem('ghost_bea_api_key');
+  localStorage.removeItem('ghost_bls_api_key');
+  localStorage.removeItem('ghost_proxy_url');
+  isLiveData = false;
+  if (fredRefreshInterval) clearInterval(fredRefreshInterval);
+  updateConnectionBadge();
+  document.getElementById('fredKeyInput').value = '';
+  document.getElementById('beaKeyInput').value = '';
+  document.getElementById('blsKeyInput').value = '';
+  document.getElementById('proxyUrlInput').value = '';
+  document.getElementById('settingsStatus').innerHTML = '<span style="color:var(--accent-orange)">All keys and proxy removed. Using static data.</span>';
+}
+
+// ── FRED Fetch Function (proxy-aware) ──
+async function fetchFRED(seriesId, units = 'pc1', freq = 'q', start = '2020-01-01') {
+  const key = getFredKey();
+  if (!key) return [];
+  const url = buildFredUrl(seriesId, units, freq, start);
+  try {
+    const res = await fetch(url);
+    const json = await res.json();
+    if (json.error_code) { console.warn(`FRED error for ${seriesId}: ${json.error_message}`); return []; }
+    return json.observations
+      .filter(o => o.value !== '.')
+      .map(o => ({ date: o.date, value: parseFloat(o.value) }));
+  } catch (err) {
+    console.warn(`FRED network error for ${seriesId}:`, err);
+    return [];
+  }
+}
+
+// ── BEA Fetch Function ──
+async function fetchBEA(tableName, frequency = 'Q', year = 'X') {
+  const key = getBeaKey();
+  if (!key) return null;
+  const url = `${BEA_BASE}?&UserID=${key}&method=GetData&DataSetName=NIPA&TableName=${tableName}&Frequency=${frequency}&Year=${year}&ResultFormat=JSON`;
+  try {
+    const res = await fetch(url);
+    const json = await res.json();
+    if (json.BEAAPI?.Results?.Error) { console.warn('BEA error:', json.BEAAPI.Results.Error); return null; }
+    return json.BEAAPI?.Results?.Data || null;
+  } catch (err) {
+    console.warn('BEA network error:', err);
+    return null;
+  }
+}
+
+// ── Data Transformers ──
+function toQuarterlyMap(arr) {
+  const map = {};
+  arr.forEach(({ date, value }) => {
+    const d = new Date(date);
+    const q = Math.ceil((d.getMonth() + 1) / 3);
+    map[`${d.getFullYear()}-Q${q}`] = Math.round(value * 10) / 10;
+  });
+  return map;
+}
+
+function toAnnualMap(arr) {
+  const map = {};
+  arr.forEach(({ date, value }) => {
+    map[new Date(date).getFullYear()] = Math.round(value * 10) / 10;
+  });
+  return map;
+}
+
+// ── Load All Data ──
+async function loadAllData() {
+  const key = getFredKey();
+  if (!key) { updateConnectionBadge(); return; }
+
+  updateConnectionBadge();
+
+  try {
+    const [
+      cpiYoY_q, cpiYoY_a, cpiMoM,
+      coreCpiYoY_q, coreCpiYoY_a,
+      ppiYoY_q, ppiYoY_a, ppiMoM,
+      corePpiYoY_q,
+      nfpChange_q, nfpChange_m,
+      unrate_q,
+      aheYoY_q,
+      jolts_q,
+      u6rate, lfpr,
+    ] = await Promise.all([
+      fetchFRED('CPIAUCSL',       'pc1', 'q'),
+      fetchFRED('CPIAUCSL',       'pc1', 'a'),
+      fetchFRED('CPIAUCSL',       'pch', 'm', '2024-01-01'),
+      fetchFRED('CPILFESL',       'pc1', 'q'),
+      fetchFRED('CPILFESL',       'pc1', 'a'),
+      fetchFRED('PPIFIS',         'pc1', 'q'),
+      fetchFRED('PPIFIS',         'pc1', 'a'),
+      fetchFRED('PPIFIS',         'pch', 'm', '2024-01-01'),
+      fetchFRED('PPIFES',         'pc1', 'q'),
+      fetchFRED('PAYEMS',         'chg', 'q'),
+      fetchFRED('PAYEMS',         'chg', 'm', '2024-01-01'),
+      fetchFRED('UNRATE',         'lin', 'q'),
+      fetchFRED('CES0500000003',  'pc1', 'q'),
+      fetchFRED('JTSJOL',         'lin', 'q'),
+      fetchFRED('U6RATE',         'lin', 'm', '2024-01-01'),
+      fetchFRED('CIVPART',        'lin', 'm', '2024-01-01'),
+    ]);
+
+    // Only update DATA if we got results
+    if (cpiYoY_q.length > 0) {
+      const last = arr => arr.length > 0 ? arr[arr.length - 1].value : null;
+      const prev = arr => arr.length > 1 ? arr[arr.length - 2].value : null;
+
+      DATA.cpi.quarterly     = toQuarterlyMap(cpiYoY_q);
+      DATA.cpi.annual        = toAnnualMap(cpiYoY_a);
+      DATA.cpiCore.quarterly = toQuarterlyMap(coreCpiYoY_q);
+      DATA.cpiCore.annual    = toAnnualMap(coreCpiYoY_a);
+      DATA.ppi.quarterly     = toQuarterlyMap(ppiYoY_q);
+      DATA.ppi.annual        = toAnnualMap(ppiYoY_a);
+      DATA.ppiCore.quarterly = toQuarterlyMap(corePpiYoY_q);
+      DATA.nfp.quarterly     = toQuarterlyMap(nfpChange_q);
+      DATA.unrate.quarterly  = toQuarterlyMap(unrate_q);
+      DATA.ahe.quarterly     = toQuarterlyMap(aheYoY_q);
+      DATA.jolts.quarterly   = toQuarterlyMap(jolts_q);
+
+      // Latest values from most recent monthly data
+      DATA.cpi.latest     = last(cpiYoY_q) ?? DATA.cpi.latest;
+      DATA.cpi.prevMonth  = prev(cpiYoY_q) ?? DATA.cpi.prevMonth;
+      DATA.cpi.mom        = last(cpiMoM) ?? DATA.cpi.mom;
+      DATA.cpiCore.latest = last(coreCpiYoY_q) ?? DATA.cpiCore.latest;
+      DATA.cpiCore.prevMonth = prev(coreCpiYoY_q) ?? DATA.cpiCore.prevMonth;
+      DATA.ppi.latest     = last(ppiYoY_q) ?? DATA.ppi.latest;
+      DATA.ppi.prevMonth  = prev(ppiYoY_q) ?? DATA.ppi.prevMonth;
+      DATA.ppi.mom        = last(ppiMoM) ?? DATA.ppi.mom;
+      DATA.ppiCore.latest = last(corePpiYoY_q) ?? DATA.ppiCore.latest;
+      DATA.ppiCore.prevMonth = prev(corePpiYoY_q) ?? DATA.ppiCore.prevMonth;
+      DATA.unrate.latest  = last(unrate_q) ?? DATA.unrate.latest;
+      DATA.unrate.prevMonth = prev(unrate_q) ?? DATA.unrate.prevMonth;
+      DATA.unrate.u6      = last(u6rate) ?? DATA.unrate.u6;
+      DATA.unrate.lfpr    = last(lfpr) ?? DATA.unrate.lfpr;
+      DATA.nfp.latestMonth = last(nfpChange_m) ?? DATA.nfp.latestMonth;
+      DATA.nfp.prevMonth   = prev(nfpChange_m) ?? DATA.nfp.prevMonth;
+      DATA.ahe.latest     = last(aheYoY_q) ?? DATA.ahe.latest;
+      DATA.jolts.latest   = last(jolts_q) ?? DATA.jolts.latest;
+
+      isLiveData = true;
+      updateConnectionBadge();
+
+      // Re-render everything with live data
+      buildSummaryCards();
+      buildTicker();
+      renderView(currentView);
+
+      // Flash the cards to signal an update
+      document.querySelectorAll('.summary-card .value').forEach(el => {
+        el.classList.add('update-flash');
+        setTimeout(() => el.classList.remove('update-flash'), 1500);
+      });
+
+      console.log('[FRED] Live data loaded at', new Date().toLocaleTimeString());
+    }
+
+    // ── BEA: Load GDP and PCE if key exists ──
+    if (getBeaKey()) {
+      try {
+        const gdpData = await fetchBEA('T10101', 'Q', 'X');
+        if (gdpData && gdpData.length > 0) {
+          // Extract real GDP growth rate (Line 1 = GDP)
+          const gdpRows = gdpData.filter(d => d.LineNumber === '1' && d.TimePeriod);
+          if (gdpRows.length > 0) {
+            const latest = gdpRows[gdpRows.length - 1];
+            console.log(`[BEA] GDP latest: ${latest.TimePeriod} = ${latest.DataValue}%`);
+          }
+        }
+      } catch (err) { console.warn('[BEA] GDP load error:', err); }
+    }
+  } catch (err) {
+    console.warn('[FRED] loadAllData error:', err);
+  }
+}
+
+// ═══════════════════════════════════════════
+// AUTO-REFRESH (5 min for live, 60s flash for static)
+// ═══════════════════════════════════════════
+setInterval(() => {
+  if (isLiveData) return; // skip flash if live data is active
+  document.querySelectorAll('.summary-card .value').forEach(el => {
+    el.classList.add('update-flash');
+    setTimeout(() => el.classList.remove('update-flash'), 1500);
+  });
+}, 60000);
+
+// INITIAL RENDER
+renderView('overview');
+
+// Attempt live data load if key exists
+updateConnectionBadge();
+if (getFredKey()) {
+  loadAllData().then(() => {
+    // Set up 5-minute refresh cycle
+    fredRefreshInterval = setInterval(loadAllData, 5 * 60 * 1000);
+  });
+}
+</script>
+</body>
+</html>

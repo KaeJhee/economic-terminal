@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GHOST STRATEGIES | Cloudflare Worker Deployment Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0e14; --bg2: #0f1419; --bg3: #151b23; --card: #111820;
+    --border: #1e2a36; --border2: #2a3a4a;
+    --text: #d4d8de; --text2: #7a8899; --muted: #4a5666;
+    --orange: #ff9500; --blue: #0084ff; --green: #00c853;
+    --red: #ff3b30; --cyan: #00e5ff; --purple: #bb86fc;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:'IBM Plex Sans',sans-serif; font-size:14px; line-height:1.7; padding:40px; max-width:900px; margin:0 auto; }
+
+  .header { border-bottom:2px solid var(--orange); padding-bottom:16px; margin-bottom:36px; }
+  .header h1 { font-family:'JetBrains Mono',monospace; font-size:22px; font-weight:700; color:var(--orange); letter-spacing:2px; text-transform:uppercase; }
+  .header .sub { color:var(--text2); font-size:13px; margin-top:4px; }
+
+  h2 { font-family:'JetBrains Mono',monospace; font-size:15px; color:var(--orange); text-transform:uppercase; letter-spacing:1.5px; margin:36px 0 14px; padding-bottom:8px; border-bottom:1px solid var(--border2); }
+  h3 { font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--cyan); text-transform:uppercase; letter-spacing:1px; margin:24px 0 10px; }
+  p { margin-bottom:10px; }
+  a { color:var(--blue); text-decoration:none; }
+  a:hover { text-decoration:underline; }
+  code { font-family:'JetBrains Mono',monospace; font-size:12px; background:var(--bg3); padding:2px 6px; border-radius:3px; color:var(--cyan); }
+  ul { margin:8px 0 12px 20px; }
+  li { margin-bottom:6px; }
+
+  pre {
+    background:var(--bg3); border:1px solid var(--border); border-radius:4px;
+    padding:16px; overflow-x:auto; margin:12px 0; font-family:'JetBrains Mono',monospace;
+    font-size:11.5px; line-height:1.6; color:var(--text); white-space:pre;
+  }
+
+  .step-card {
+    background:var(--card); border:1px solid var(--border); border-left:3px solid var(--orange);
+    border-radius:4px; padding:20px; margin:16px 0;
+  }
+  .step-num {
+    display:inline-flex; align-items:center; justify-content:center;
+    width:30px; height:30px; background:var(--orange); color:var(--bg);
+    font-family:'JetBrains Mono',monospace; font-weight:700; font-size:14px;
+    border-radius:50%; margin-right:12px; flex-shrink:0;
+  }
+  .step-title { font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:600; color:var(--text); display:inline; }
+
+  .warn { background:rgba(255,149,0,0.08); border:1px solid rgba(255,149,0,0.3); border-left:3px solid var(--orange); padding:12px 16px; border-radius:4px; margin:14px 0; font-size:13px; }
+  .tip { background:rgba(0,200,83,0.08); border:1px solid rgba(0,200,83,0.3); border-left:3px solid var(--green); padding:12px 16px; border-radius:4px; margin:14px 0; font-size:13px; }
+  .danger { background:rgba(255,59,48,0.08); border:1px solid rgba(255,59,48,0.3); border-left:3px solid var(--red); padding:12px 16px; border-radius:4px; margin:14px 0; font-size:13px; }
+
+  .copy-btn {
+    background:var(--orange); color:var(--bg); border:none; padding:6px 16px;
+    font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:600;
+    border-radius:3px; cursor:pointer; text-transform:uppercase; letter-spacing:1px; margin:8px 0;
+  }
+  .copy-btn:hover { opacity:0.9; }
+
+  .footer { margin-top:50px; padding-top:16px; border-top:1px solid var(--border); text-align:center; font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--muted); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Cloudflare Worker Deployment</h1>
+  <div class="sub">CORS proxy for FRED &amp; BLS APIs — deploy in 10 minutes, free forever</div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<h2>What This Does &amp; Why You Need It</h2>
+
+<p>
+  FRED and BLS don't return <code>Access-Control-Allow-Origin</code> headers, which means browsers block JavaScript from calling them directly. This is called <strong>CORS</strong> (Cross-Origin Resource Sharing).
+</p>
+<p>
+  Locally, <code>server.py</code> handles this by proxying API calls through Python. But on GitHub Pages, there's no server — it's static HTML only. A <strong>Cloudflare Worker</strong> solves this: it's a tiny script that runs on Cloudflare's edge network, receives your API call, forwards it to FRED/BLS, and returns the response with proper CORS headers. Free tier gives you <strong>100,000 requests per day</strong>.
+</p>
+
+<div class="tip">
+  <strong>BEA does not need this.</strong> BEA already supports CORS, so the dashboard calls it directly. This Worker is only for FRED and BLS.
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<h2>The Complete Worker Code</h2>
+
+<p>This single script handles both FRED (GET requests) and BLS (POST requests). Copy the entire block:</p>
+
+<button class="copy-btn" onclick="copyCode()">Copy to Clipboard</button>
+
+<pre id="workerCode">export default {
+  async fetch(request) {
+    // Handle CORS preflight
+    if (request.method === 'OPTIONS') {
+      return new Response(null, {
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type',
+        }
+      });
+    }
+
+    const url = new URL(request.url);
+    const params = url.search; // everything after the ?
+    let targetUrl;
+    let fetchOptions = {};
+
+    if (request.method === 'POST') {
+      // ── BLS: POST requests ──
+      targetUrl = 'https://api.bls.gov/publicAPI/v2/timeseries/data/';
+      const body = await request.text();
+      fetchOptions = {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: body,
+      };
+    } else {
+      // ── FRED: GET requests with query params ──
+      targetUrl = 'https://api.stlouisfed.org/fred/series/observations' + params;
+      fetchOptions = { method: 'GET' };
+    }
+
+    try {
+      const resp = await fetch(targetUrl, fetchOptions);
+      const data = await resp.text();
+
+      return new Response(data, {
+        status: resp.status,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+          'Cache-Control': 'public, max-age=300',
+        }
+      });
+    } catch (err) {
+      return new Response(JSON.stringify({ error: err.message }), {
+        status: 502,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+        }
+      });
+    }
+  }
+};</pre>
+
+<h3>What Each Section Does</h3>
+<ul>
+  <li><strong>OPTIONS handler (lines 3-11):</strong> Browsers send a "preflight" OPTIONS request before the real one. This tells the browser "yes, I accept requests from any origin."</li>
+  <li><strong>POST branch (lines 17-24):</strong> If the dashboard sends a POST (used for BLS), forward it to the BLS API with the JSON body intact.</li>
+  <li><strong>GET branch (lines 26-29):</strong> If the dashboard sends a GET (used for FRED), take all the query parameters (<code>?series_id=CPIAUCSL&amp;api_key=...&amp;units=pc1</code>) and forward them to FRED's endpoint.</li>
+  <li><strong>Response (lines 32-40):</strong> Return whatever FRED/BLS sent back, but add <code>Access-Control-Allow-Origin: *</code> so the browser allows it. Also adds 5-minute caching to reduce redundant calls.</li>
+  <li><strong>Error handling (lines 41-48):</strong> If the upstream API is down or unreachable, return a clean JSON error instead of crashing.</li>
+</ul>
+
+<!-- ═══════════════════════════════════════ -->
+<h2>Step-by-Step Deployment</h2>
+
+<div class="step-card">
+  <span class="step-num">1</span>
+  <span class="step-title">Create a Cloudflare Account</span>
+  <p style="margin-top:10px;">
+    Go to <a href="https://dash.cloudflare.com/sign-up" target="_blank"><strong>dash.cloudflare.com/sign-up</strong></a>
+  </p>
+  <ul>
+    <li>Enter your email and a password</li>
+    <li>Verify your email (check inbox for confirmation link)</li>
+    <li>You do <strong>not</strong> need to add a domain or a website — skip any prompts about that</li>
+    <li>The free tier is all you need (100,000 Worker requests/day)</li>
+  </ul>
+</div>
+
+<div class="step-card">
+  <span class="step-num">2</span>
+  <span class="step-title">Go to Workers &amp; Pages</span>
+  <p style="margin-top:10px;">
+    Once logged in to the Cloudflare dashboard:
+  </p>
+  <ul>
+    <li>Look at the <strong>left sidebar</strong></li>
+    <li>Click <strong>"Workers & Pages"</strong> (it has a wrench/gear icon)</li>
+    <li>If you don't see it, click the hamburger menu (☰) at the top-left to expand the sidebar</li>
+  </ul>
+</div>
+
+<div class="step-card">
+  <span class="step-num">3</span>
+  <span class="step-title">Create a New Worker</span>
+  <p style="margin-top:10px;">
+    On the Workers & Pages screen:
+  </p>
+  <ul>
+    <li>Click the blue <strong>"Create"</strong> button</li>
+    <li>You'll see two tabs at the top: "Workers" and "Pages" — make sure <strong>"Workers"</strong> is selected</li>
+    <li>Click <strong>"Create Worker"</strong></li>
+    <li>Cloudflare gives your worker a random name like <code>cold-frost-a1b2</code> — change it to something recognizable:
+      <br><code style="font-size:14px;color:var(--orange);background:var(--bg);padding:4px 10px;display:inline-block;margin-top:4px;">ghost-api-proxy</code></li>
+    <li>Click <strong>"Deploy"</strong> — don't worry about the code yet, we'll edit it next</li>
+  </ul>
+</div>
+
+<div class="step-card">
+  <span class="step-num">4</span>
+  <span class="step-title">Open the Code Editor</span>
+  <p style="margin-top:10px;">
+    After deploying the default "Hello World" worker:
+  </p>
+  <ul>
+    <li>You'll land on the worker's overview page</li>
+    <li>Click <strong>"Edit Code"</strong> (blue button, top right) — this opens Cloudflare's online code editor</li>
+    <li>You'll see a file called <code>worker.js</code> in the left panel with some default code</li>
+  </ul>
+</div>
+
+<div class="step-card">
+  <span class="step-num">5</span>
+  <span class="step-title">Replace the Code</span>
+  <p style="margin-top:10px;">
+    In the code editor:
+  </p>
+  <ul>
+    <li><strong>Select all</strong> the existing code (<code>Ctrl + A</code> on Windows, <code>Cmd + A</code> on Mac)</li>
+    <li><strong>Delete it</strong> (press <code>Delete</code> or <code>Backspace</code>)</li>
+    <li><strong>Paste</strong> the Worker code from above (<code>Ctrl + V</code> / <code>Cmd + V</code>)</li>
+    <li>You can click the <strong>"Copy to Clipboard"</strong> button at the top of this page to copy it first</li>
+  </ul>
+  <div class="warn">
+    <strong>Make sure you replaced ALL the code.</strong> The editor should show the <code>export default</code> block and nothing else — no leftover <code>addEventListener</code> from the default template.
+  </div>
+</div>
+
+<div class="step-card">
+  <span class="step-num">6</span>
+  <span class="step-title">Deploy</span>
+  <p style="margin-top:10px;">
+    Click the blue <strong>"Deploy"</strong> button in the top-right corner of the code editor.
+  </p>
+  <ul>
+    <li>Cloudflare compiles and deploys your Worker globally in about 2 seconds</li>
+    <li>You'll see a green success message</li>
+    <li>Your Worker is now live at:
+      <br><code style="font-size:14px;color:var(--orange);background:var(--bg);padding:4px 10px;display:inline-block;margin-top:4px;">https://ghost-api-proxy.YOUR_SUBDOMAIN.workers.dev</code></li>
+  </ul>
+</div>
+
+<div class="step-card">
+  <span class="step-num">7</span>
+  <span class="step-title">Copy Your Worker URL</span>
+  <p style="margin-top:10px;">
+    After deploying, look for the URL displayed on the page. It follows this pattern:
+  </p>
+  <pre style="margin:8px 0;font-size:13px;">https://ghost-api-proxy.<span style="color:var(--orange)">YOUR_SUBDOMAIN</span>.workers.dev</pre>
+  <p>
+    <code>YOUR_SUBDOMAIN</code> is the subdomain Cloudflare assigned to your account when you signed up. It's usually something like <code>a1b2c3d4</code> or you may have chosen a custom one.
+  </p>
+  <ul>
+    <li>Click the URL to open it in a new tab — you should see <code>{"error":"..."}</code> or a blank response, which is fine. It means the Worker is running but no valid API params were passed.</li>
+    <li><strong>Copy this URL</strong> — you'll paste it into the dashboard next</li>
+  </ul>
+</div>
+
+<div class="step-card">
+  <span class="step-num">8</span>
+  <span class="step-title">Connect Your Dashboard</span>
+  <p style="margin-top:10px;">
+    Open your Economic Indicators Terminal (either locally or on GitHub Pages):
+  </p>
+  <ul>
+    <li>Click the <strong>"API"</strong> button in the top-right corner</li>
+    <li>Paste your FRED API key in the first field</li>
+    <li>Scroll down to <strong>"CORS Proxy URL"</strong></li>
+    <li>Paste your Worker URL:
+      <br><code>https://ghost-api-proxy.YOUR_SUBDOMAIN.workers.dev</code></li>
+    <li>Click <strong>"Test All Keys"</strong> — you should see:
+      <br><span style="color:var(--green);font-family:'JetBrains Mono',monospace;font-size:12px;">FRED: Connected (via Cloudflare Worker)  Latest CPI: 2026-02-01 = 2.80%</span></li>
+    <li>Click <strong>"Save &amp; Connect"</strong></li>
+  </ul>
+  <div class="tip">
+    <strong>That's it.</strong> Your dashboard now fetches live FRED data through your Cloudflare Worker, bypassing CORS. The Worker URL and API keys are stored in localStorage — they never appear in your code or Git repo.
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<h2>Testing Your Worker Directly</h2>
+
+<p>You can test the Worker by pasting this URL into any browser tab (replace the subdomain and API key):</p>
+
+<pre>https://ghost-api-proxy.YOUR_SUBDOMAIN.workers.dev?series_id=CPIAUCSL&api_key=YOUR_FRED_KEY&file_type=json&observation_start=2025-01-01&units=pc1&frequency=m&sort_order=desc&limit=3</pre>
+
+<p>If everything is working, you'll see raw JSON with CPI observations. If you see an error, double-check:</p>
+<ul>
+  <li>The Worker URL is exactly right (no trailing slash needed)</li>
+  <li>Your FRED API key is valid</li>
+  <li>The Worker code was fully replaced (no leftover default code)</li>
+</ul>
+
+<!-- ═══════════════════════════════════════ -->
+<h2>How the Dashboard Uses the Proxy</h2>
+
+<p>When the dashboard detects it's running on a remote host (not localhost), it routes FRED calls through your Worker URL instead of calling FRED directly:</p>
+
+<pre><span style="color:var(--muted)">// Without proxy (blocked by CORS):</span>
+<span style="color:var(--red)">https://api.stlouisfed.org/fred/series/observations?series_id=CPIAUCSL&...</span>
+
+<span style="color:var(--muted)">// With proxy (CORS headers added by Worker):</span>
+<span style="color:var(--green)">https://ghost-api-proxy.YOUR_SUBDOMAIN.workers.dev?series_id=CPIAUCSL&...</span></pre>
+
+<p>
+  The Worker receives the exact same query parameters, forwards them to FRED, gets the response, adds the <code>Access-Control-Allow-Origin: *</code> header, and returns it. The dashboard doesn't know the difference — it gets the same JSON either way.
+</p>
+
+<!-- ═══════════════════════════════════════ -->
+<h2>Security Considerations</h2>
+
+<div class="warn">
+  <strong>Your FRED API key is visible in the Worker request URL.</strong> This is the same as any browser-based API call — the key travels in the query string. For FRED and BLS (free government APIs with no billing), this is acceptable. If you later use this pattern with paid APIs, you'd store the key as a <a href="https://developers.cloudflare.com/workers/configuration/secrets/" target="_blank" style="color:var(--orange)">Cloudflare Worker Secret</a> instead of passing it in the URL.
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<h2>Quick Reference</h2>
+
+<table style="width:100%;border-collapse:collapse;font-family:'JetBrains Mono',monospace;font-size:11px;margin:16px 0;">
+  <tr style="background:var(--bg3);">
+    <th style="text-align:left;padding:8px;color:var(--orange);border-bottom:1px solid var(--border2);">Item</th>
+    <th style="text-align:left;padding:8px;color:var(--orange);border-bottom:1px solid var(--border2);">Value</th>
+  </tr>
+  <tr><td style="padding:8px;border-bottom:1px solid var(--border);color:var(--text2);">Cloudflare signup</td><td style="padding:8px;border-bottom:1px solid var(--border);color:var(--cyan);">dash.cloudflare.com/sign-up</td></tr>
+  <tr><td style="padding:8px;border-bottom:1px solid var(--border);color:var(--text2);">Free tier limit</td><td style="padding:8px;border-bottom:1px solid var(--border);">100,000 requests/day</td></tr>
+  <tr><td style="padding:8px;border-bottom:1px solid var(--border);color:var(--text2);">Worker name</td><td style="padding:8px;border-bottom:1px solid var(--border);color:var(--orange);">ghost-api-proxy</td></tr>
+  <tr><td style="padding:8px;border-bottom:1px solid var(--border);color:var(--text2);">Your Worker URL</td><td style="padding:8px;border-bottom:1px solid var(--border);color:var(--green);">https://ghost-api-proxy.SUBDOMAIN.workers.dev</td></tr>
+  <tr><td style="padding:8px;border-bottom:1px solid var(--border);color:var(--text2);">Handles</td><td style="padding:8px;border-bottom:1px solid var(--border);">FRED (GET) + BLS (POST)</td></tr>
+  <tr><td style="padding:8px;border-bottom:1px solid var(--border);color:var(--text2);">Cache</td><td style="padding:8px;border-bottom:1px solid var(--border);">5 min (Cache-Control header)</td></tr>
+  <tr><td style="padding:8px;border-bottom:1px solid var(--border);color:var(--text2);">Dashboard field</td><td style="padding:8px;border-bottom:1px solid var(--border);">Settings → CORS Proxy URL</td></tr>
+</table>
+
+<!-- ═══════════════════════════════════════ -->
+<h2>Troubleshooting</h2>
+
+<h3>Worker returns "Hello World" instead of API data</h3>
+<p>You didn't replace the default code. Go back to Workers & Pages → click your worker → Edit Code → select all → delete → paste the code from this page → Deploy.</p>
+
+<h3>"Script startup exceeded CPU time limit"</h3>
+<p>The Worker code has a syntax error. Open the editor, check for missing brackets or semicolons. Use the browser console in the Cloudflare editor to see the exact error.</p>
+
+<h3>Dashboard still shows CORS errors</h3>
+<p>Check that the proxy URL in your dashboard settings matches exactly — no trailing slash, no extra spaces. Open browser DevTools (F12) → Network tab → find the failed request → verify the URL starts with your Worker domain, not <code>api.stlouisfed.org</code>.</p>
+
+<h3>"502 Bad Gateway" from the Worker</h3>
+<p>The upstream API (FRED or BLS) is temporarily down or unreachable. Wait a few minutes and try again. The Worker's error handler returns a clean JSON message in this case.</p>
+
+<script>
+function copyCode() {
+  const code = document.getElementById('workerCode').textContent;
+  navigator.clipboard.writeText(code).then(() => {
+    const btn = document.querySelector('.copy-btn');
+    btn.textContent = 'Copied!';
+    btn.style.background = '#00c853';
+    setTimeout(() => { btn.textContent = 'Copy to Clipboard'; btn.style.background = '#ff9500'; }, 2000);
+  });
+}
+</script>
+
+<div class="footer">GHOST STRATEGIES LLC — Cloudflare Worker Deployment Guide v1.0</div>
+
+</body>
+</html>
