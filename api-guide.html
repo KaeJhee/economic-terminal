@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GHOST STRATEGIES | API Configuration Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-primary: #0a0e14;
+    --bg-secondary: #0f1419;
+    --bg-tertiary: #151b23;
+    --bg-card: #111820;
+    --border: #1e2a36;
+    --border-accent: #2a3a4a;
+    --text-primary: #d4d8de;
+    --text-secondary: #7a8899;
+    --text-muted: #4a5666;
+    --accent-orange: #ff9500;
+    --accent-blue: #0084ff;
+    --accent-green: #00c853;
+    --accent-red: #ff3b30;
+    --accent-cyan: #00e5ff;
+    --accent-purple: #bb86fc;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 14px;
+    line-height: 1.7;
+    padding: 40px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .header {
+    border-bottom: 2px solid var(--accent-orange);
+    padding-bottom: 20px;
+    margin-bottom: 40px;
+  }
+
+  .header h1 {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--accent-orange);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .header .sub {
+    color: var(--text-secondary);
+    font-size: 13px;
+    margin-top: 6px;
+  }
+
+  h2 {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 16px;
+    color: var(--accent-orange);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin: 40px 0 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-accent);
+  }
+
+  h3 {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--accent-cyan);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin: 28px 0 12px;
+  }
+
+  p { margin-bottom: 12px; color: var(--text-primary); }
+
+  a { color: var(--accent-blue); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 20px;
+    margin: 16px 0;
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+
+  .card-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .card-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+    font-size: 14px;
+  }
+
+  .card-meta {
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    background: var(--bg-tertiary);
+    padding: 2px 6px;
+    border-radius: 3px;
+    color: var(--accent-cyan);
+  }
+
+  pre {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 16px;
+    overflow-x: auto;
+    margin: 12px 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--text-primary);
+  }
+
+  .comment { color: var(--text-muted); }
+  .string { color: var(--accent-green); }
+  .keyword { color: var(--accent-purple); }
+  .url { color: var(--accent-blue); }
+  .var { color: var(--accent-orange); }
+  .num { color: var(--accent-cyan); }
+
+  .step-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background: var(--accent-orange);
+    color: var(--bg-primary);
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 13px;
+    border-radius: 50%;
+    margin-right: 10px;
+  }
+
+  .step {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .step:last-child { border-bottom: none; }
+
+  .tag {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 3px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+  }
+
+  .tag-free { background: rgba(0,200,83,0.15); color: var(--accent-green); border: 1px solid rgba(0,200,83,0.3); }
+  .tag-gov { background: rgba(0,132,255,0.15); color: var(--accent-blue); border: 1px solid rgba(0,132,255,0.3); }
+  .tag-best { background: rgba(255,149,0,0.15); color: var(--accent-orange); border: 1px solid rgba(255,149,0,0.3); }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    margin: 16px 0;
+  }
+
+  th {
+    text-align: left;
+    padding: 10px;
+    color: var(--text-muted);
+    font-weight: 500;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    background: var(--bg-tertiary);
+    border-bottom: 1px solid var(--border-accent);
+  }
+
+  td {
+    padding: 10px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-primary);
+  }
+
+  .warning {
+    background: rgba(255,59,48,0.08);
+    border: 1px solid rgba(255,59,48,0.3);
+    border-left: 3px solid var(--accent-red);
+    padding: 14px 16px;
+    border-radius: 4px;
+    margin: 16px 0;
+    font-size: 13px;
+  }
+
+  .tip {
+    background: rgba(0,200,83,0.08);
+    border: 1px solid rgba(0,200,83,0.3);
+    border-left: 3px solid var(--accent-green);
+    padding: 14px 16px;
+    border-radius: 4px;
+    margin: 16px 0;
+    font-size: 13px;
+  }
+
+  .info {
+    background: rgba(0,132,255,0.08);
+    border: 1px solid rgba(0,132,255,0.3);
+    border-left: 3px solid var(--accent-blue);
+    padding: 14px 16px;
+    border-radius: 4px;
+    margin: 16px 0;
+    font-size: 13px;
+  }
+
+  /* CONFIG PANEL */
+  .config-panel {
+    background: var(--bg-card);
+    border: 1px solid var(--accent-orange);
+    border-radius: 6px;
+    padding: 24px;
+    margin: 24px 0;
+  }
+
+  .config-panel label {
+    display: block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+    margin-top: 16px;
+  }
+
+  .config-panel label:first-child { margin-top: 0; }
+
+  .config-panel input {
+    width: 100%;
+    padding: 10px 14px;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-accent);
+    border-radius: 4px;
+    color: var(--text-primary);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+  }
+
+  .config-panel input:focus {
+    outline: none;
+    border-color: var(--accent-orange);
+  }
+
+  .config-panel button {
+    margin-top: 20px;
+    padding: 10px 24px;
+    background: var(--accent-orange);
+    color: var(--bg-primary);
+    border: none;
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .config-panel button:hover { opacity: 0.9; }
+
+  #testResults {
+    margin-top: 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    white-space: pre-wrap;
+    max-height: 300px;
+    overflow-y: auto;
+  }
+
+  .result-success { color: var(--accent-green); }
+  .result-error { color: var(--accent-red); }
+  .result-info { color: var(--accent-cyan); }
+
+  .flow-diagram {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr auto 1fr;
+    gap: 12px;
+    align-items: center;
+    margin: 24px 0;
+    text-align: center;
+  }
+
+  .flow-box {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-accent);
+    border-radius: 6px;
+    padding: 16px;
+  }
+
+  .flow-box .title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+
+  .flow-box .desc {
+    font-size: 10px;
+    color: var(--text-muted);
+  }
+
+  .flow-arrow {
+    font-size: 20px;
+    color: var(--accent-orange);
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>API Integration Guide</h1>
+  <div class="sub">How to connect live BLS, FRED, and BEA data to the Economic Indicators Terminal</div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- OVERVIEW -->
+<!-- ═══════════════════════════════════════ -->
+<h2>Where the Data Comes From</h2>
+
+<p>Three U.S. government agencies publish the data in this terminal, and each provides a free API. Here's the architecture:</p>
+
+<div class="flow-diagram">
+  <div class="flow-box">
+    <div class="title" style="color:var(--accent-blue)">BLS API</div>
+    <div class="desc">CPI, PPI, Employment<br>Primary source</div>
+  </div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box">
+    <div class="title" style="color:var(--accent-orange)">Your Dashboard</div>
+    <div class="desc">JavaScript fetch()<br>Parses JSON responses</div>
+  </div>
+  <div class="flow-arrow">←</div>
+  <div class="flow-box">
+    <div class="title" style="color:var(--accent-green)">FRED API</div>
+    <div class="desc">Same data + extras<br>Easier to use, more flexible</div>
+  </div>
+</div>
+
+<div class="tip">
+  <strong>Recommendation:</strong> Use <strong>FRED</strong> as your primary API. It aggregates BLS data (plus hundreds of other sources) into a single, cleaner API with better documentation, more flexible queries, and no CORS issues. Use BLS directly only if you need data the same morning it's released (FRED has a ~30 minute delay from BLS releases).
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- API COMPARISON TABLE -->
+<!-- ═══════════════════════════════════════ -->
+<h2>API Comparison</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Feature</th>
+      <th>FRED (Recommended)</th>
+      <th>BLS v2</th>
+      <th>BEA</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Cost</td>
+      <td><span class="tag tag-free">Free</span></td>
+      <td><span class="tag tag-free">Free</span></td>
+      <td><span class="tag tag-free">Free</span></td>
+    </tr>
+    <tr>
+      <td>Registration</td>
+      <td>Email only</td>
+      <td>Email + org name</td>
+      <td>Email only</td>
+    </tr>
+    <tr>
+      <td>Key Delivery</td>
+      <td>Instant (on screen)</td>
+      <td>Emailed within minutes</td>
+      <td>Emailed within minutes</td>
+    </tr>
+    <tr>
+      <td>Rate Limit</td>
+      <td>120 req/min</td>
+      <td>500 queries/day</td>
+      <td>Unlimited</td>
+    </tr>
+    <tr>
+      <td>Data History</td>
+      <td>Full history</td>
+      <td>20 years max</td>
+      <td>Full history</td>
+    </tr>
+    <tr>
+      <td>CORS Friendly</td>
+      <td style="color:var(--accent-green)">✓ Works in browser</td>
+      <td style="color:var(--accent-red)">✗ Needs proxy</td>
+      <td style="color:var(--accent-green)">✓ Works in browser</td>
+    </tr>
+    <tr>
+      <td>Response Format</td>
+      <td>JSON, XML, CSV</td>
+      <td>JSON, XLSX</td>
+      <td>JSON, XML</td>
+    </tr>
+    <tr>
+      <td>Built-in Math</td>
+      <td style="color:var(--accent-green)">✓ YoY%, annualized</td>
+      <td>Net/pct change</td>
+      <td>Limited</td>
+    </tr>
+    <tr>
+      <td>Best For</td>
+      <td><span class="tag tag-best">Dashboard</span></td>
+      <td><span class="tag tag-gov">Same-day releases</span></td>
+      <td><span class="tag tag-gov">GDP / National Accounts</span></td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- STEP 1: FRED REGISTRATION -->
+<!-- ═══════════════════════════════════════ -->
+<h2>Step 1 — Get Your API Keys</h2>
+
+<div class="card">
+  <div class="card-header">
+    <div class="card-icon" style="background:rgba(0,200,83,0.15);color:var(--accent-green);">F</div>
+    <div>
+      <div class="card-title" style="color:var(--accent-green)">FRED API Key (Primary — Do This First)</div>
+      <div class="card-meta">Federal Reserve Bank of St. Louis</div>
+    </div>
+  </div>
+
+  <div class="step"><span class="step-num">1</span><div>Go to <a href="https://fred.stlouisfed.org/docs/api/api_key.html" target="_blank">https://fred.stlouisfed.org/docs/api/api_key.html</a></div></div>
+  <div class="step"><span class="step-num">2</span><div>Click <strong>"Request API Key"</strong> — this takes you to a registration page</div></div>
+  <div class="step"><span class="step-num">3</span><div>Create a free account with your email (use <code>kris@ghoststrategies.io</code>)</div></div>
+  <div class="step"><span class="step-num">4</span><div>Once logged in, go to <strong>My Account → API Keys</strong></div></div>
+  <div class="step"><span class="step-num">5</span><div>Click <strong>"Request API Key"</strong> — enter app description: <code>Ghost Strategies Economic Terminal</code></div></div>
+  <div class="step"><span class="step-num">6</span><div>Your key appears immediately — it's a <strong>32-character string</strong> like <code>abcdef1234567890abcdef1234567890</code></div></div>
+  <div class="step"><span class="step-num">7</span><div>Copy it and save it somewhere safe. You'll paste it into your dashboard code.</div></div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <div class="card-icon" style="background:rgba(0,132,255,0.15);color:var(--accent-blue);">B</div>
+    <div>
+      <div class="card-title" style="color:var(--accent-blue)">BLS API Key (Optional — For Same-Day Releases)</div>
+      <div class="card-meta">Bureau of Labor Statistics, U.S. Department of Labor</div>
+    </div>
+  </div>
+
+  <div class="step"><span class="step-num">1</span><div>Go to <a href="https://data.bls.gov/registrationEngine/" target="_blank">https://data.bls.gov/registrationEngine/</a></div></div>
+  <div class="step"><span class="step-num">2</span><div>Fill in: Email, Organization (<code>Ghost Strategies LLC</code>), and submit</div></div>
+  <div class="step"><span class="step-num">3</span><div>Check your email — BLS sends the API key within a few minutes</div></div>
+  <div class="step"><span class="step-num">4</span><div>Save the key. This is the registration key you'll include in POST requests.</div></div>
+
+  <div class="warning">
+    <strong>CORS Issue:</strong> BLS API does <em>not</em> set CORS headers, which means you cannot call it directly from a browser-based HTML page. You need either (a) a backend proxy, or (b) to use FRED instead, which does support CORS. For a GitHub Pages deployment, <strong>use FRED</strong>.
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <div class="card-icon" style="background:rgba(187,134,252,0.15);color:var(--accent-purple);">E</div>
+    <div>
+      <div class="card-title" style="color:var(--accent-purple)">BEA API Key (Optional — For GDP Data)</div>
+      <div class="card-meta">Bureau of Economic Analysis, U.S. Department of Commerce</div>
+    </div>
+  </div>
+
+  <div class="step"><span class="step-num">1</span><div>Go to <a href="https://apps.bea.gov/api/signup/" target="_blank">https://apps.bea.gov/api/signup/</a></div></div>
+  <div class="step"><span class="step-num">2</span><div>Enter your email — key is emailed within minutes</div></div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- SERIES ID REFERENCE -->
+<!-- ═══════════════════════════════════════ -->
+<h2>Step 2 — Understand Series IDs</h2>
+
+<p>Every economic data series has a unique ID. Here's exactly which IDs map to each indicator in your terminal:</p>
+
+<table>
+  <thead>
+    <tr><th>Dashboard Indicator</th><th>FRED Series ID</th><th>BLS Series ID</th><th>Frequency</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>CPI All Items (SA)</td><td><code>CPIAUCSL</code></td><td><code>CUSR0000SA0</code></td><td>Monthly</td></tr>
+    <tr><td>CPI Core (ex F&E, SA)</td><td><code>CPILFESL</code></td><td><code>CUSR0000SA0L1E</code></td><td>Monthly</td></tr>
+    <tr><td>CPI Food</td><td><code>CPIUFDSL</code></td><td><code>CUSR0000SAF1</code></td><td>Monthly</td></tr>
+    <tr><td>CPI Energy</td><td><code>CPIENGSL</code></td><td><code>CUSR0000SA0E</code></td><td>Monthly</td></tr>
+    <tr><td>CPI Shelter</td><td><code>CUSR0000SAH1</code></td><td><code>CUSR0000SAH1</code></td><td>Monthly</td></tr>
+    <tr><td>CPI Medical</td><td><code>CPIMEDSL</code></td><td><code>CUSR0000SAM</code></td><td>Monthly</td></tr>
+    <tr><td>PPI Final Demand</td><td><code>PPIFIS</code></td><td><code>WPUFD4</code></td><td>Monthly</td></tr>
+    <tr><td>PPI Core (ex F&E&T)</td><td><code>PPIFES</code></td><td><code>WPUFD49116</code></td><td>Monthly</td></tr>
+    <tr><td>PPI Goods</td><td><code>PPIFGS</code></td><td><code>WPUFD41</code></td><td>Monthly</td></tr>
+    <tr><td>PPI Services</td><td><code>PPIFSS</code></td><td><code>WPUFD42</code></td><td>Monthly</td></tr>
+    <tr><td>Nonfarm Payrolls (SA)</td><td><code>PAYEMS</code></td><td><code>CES0000000001</code></td><td>Monthly</td></tr>
+    <tr><td>Unemployment Rate (U-3)</td><td><code>UNRATE</code></td><td><code>LNS14000000</code></td><td>Monthly</td></tr>
+    <tr><td>U-6 Unemployment</td><td><code>U6RATE</code></td><td><code>LNS13327709</code></td><td>Monthly</td></tr>
+    <tr><td>Labor Force Part. Rate</td><td><code>CIVPART</code></td><td><code>LNS11300000</code></td><td>Monthly</td></tr>
+    <tr><td>Avg Hourly Earnings</td><td><code>CES0500000003</code></td><td><code>CES0500000003</code></td><td>Monthly</td></tr>
+    <tr><td>JOLTS Job Openings</td><td><code>JTSJOL</code></td><td><code>JTS000000000000000JOL</code></td><td>Monthly</td></tr>
+    <tr><td>Initial Jobless Claims</td><td><code>ICSA</code></td><td>—</td><td>Weekly</td></tr>
+    <tr><td>Fed Funds Rate</td><td><code>FEDFUNDS</code></td><td>—</td><td>Monthly</td></tr>
+  </tbody>
+</table>
+
+<div class="info">
+  <strong>How to find more series:</strong> Go to <a href="https://fred.stlouisfed.org" target="_blank">fred.stlouisfed.org</a>, search for any economic indicator, and the Series ID is displayed on the page. You can use <em>any</em> FRED series in your dashboard.
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- STEP 3: THE CODE -->
+<!-- ═══════════════════════════════════════ -->
+<h2>Step 3 — The Integration Code</h2>
+
+<p>Below is the complete API module you'll paste into your <code>index.html</code>. It replaces the static <code>DATA</code> object with live FRED calls.</p>
+
+<h3>3A — FRED API Fetch Function</h3>
+
+<p>This is the core function. It calls FRED, gets JSON back, and returns an array of <code>{date, value}</code> objects:</p>
+
+<pre><span class="comment">// ═══════════════════════════════════════════════════
+// FRED API MODULE — paste this ABOVE your DATA object
+// ═══════════════════════════════════════════════════</span>
+
+<span class="keyword">const</span> <span class="var">FRED_API_KEY</span> = localStorage.getItem(<span class="string">'fred_api_key'</span>) || <span class="string">'YOUR_KEY_HERE'</span>;
+<span class="keyword">const</span> <span class="var">FRED_BASE</span>   = <span class="string">'https://api.stlouisfed.org/fred/series/observations'</span>;
+
+<span class="comment">/**
+ * Fetch a FRED series and return parsed observations.
+ *
+ * @param {string} seriesId   — e.g. 'CPIAUCSL'
+ * @param {string} startDate  — e.g. '2020-01-01'
+ * @param {string} units      — 'lin' (level), 'pc1' (YoY %), 'pch' (MoM %)
+ * @param {string} freq       — 'q' (quarterly), 'a' (annual), 'm' (monthly)
+ * @returns {Promise&lt;Array&lt;{date: string, value: number}&gt;&gt;}
+ */</span>
+<span class="keyword">async function</span> <span class="var">fetchFRED</span>(seriesId, startDate = <span class="string">'2020-01-01'</span>, units = <span class="string">'pc1'</span>, freq = <span class="string">'m'</span>) {
+  <span class="keyword">const</span> url = <span class="string">`${FRED_BASE}?series_id=${seriesId}`</span>
+    + <span class="string">`&api_key=${FRED_API_KEY}`</span>
+    + <span class="string">`&file_type=json`</span>
+    + <span class="string">`&observation_start=${startDate}`</span>
+    + <span class="string">`&units=${units}`</span>
+    + <span class="string">`&frequency=${freq}`</span>
+    + <span class="string">`&sort_order=asc`</span>;
+
+  <span class="keyword">try</span> {
+    <span class="keyword">const</span> res = <span class="keyword">await</span> fetch(url);
+    <span class="keyword">const</span> json = <span class="keyword">await</span> res.json();
+    <span class="keyword">return</span> json.observations
+      .filter(o => o.value !== <span class="string">'.'</span>)  <span class="comment">// FRED uses '.' for missing</span>
+      .map(o => ({
+        date:  o.date,
+        value: parseFloat(o.value)
+      }));
+  } <span class="keyword">catch</span> (err) {
+    console.error(<span class="string">`FRED fetch failed for ${seriesId}:`</span>, err);
+    <span class="keyword">return</span> [];
+  }
+}</pre>
+
+<h3>3B — The "units" Parameter (This is the Key Concept)</h3>
+
+<p>FRED can do math for you. Instead of fetching raw index levels and calculating YoY change yourself, you tell FRED what transform you want:</p>
+
+<table>
+  <thead><tr><th>units value</th><th>What it returns</th><th>Use for</th></tr></thead>
+  <tbody>
+    <tr><td><code>lin</code></td><td>Raw level (e.g., 314.69)</td><td>Index levels, payroll counts</td></tr>
+    <tr><td><code>pc1</code></td><td>Percent change from year ago</td><td><strong>CPI YoY%, PPI YoY%, AHE YoY%</strong></td></tr>
+    <tr><td><code>pch</code></td><td>Percent change from prior period</td><td><strong>CPI MoM%, PPI MoM%</strong></td></tr>
+    <tr><td><code>ch1</code></td><td>Change from year ago (level)</td><td>NFP annual change</td></tr>
+    <tr><td><code>chg</code></td><td>Change from prior period (level)</td><td><strong>NFP monthly change</strong></td></tr>
+    <tr><td><code>pca</code></td><td>Compounded annual rate of change</td><td>Annualized quarterly rates</td></tr>
+    <tr><td><code>log</code></td><td>Natural log</td><td>Academic / modeling</td></tr>
+  </tbody>
+</table>
+
+<h3>3C — Loading All Dashboard Data</h3>
+
+<pre><span class="comment">// ═══════════════════════════════════════════════════
+// LOAD ALL SERIES — call this on page load
+// ═══════════════════════════════════════════════════</span>
+
+<span class="keyword">async function</span> <span class="var">loadAllData</span>() {
+  <span class="keyword">const</span> start = <span class="string">'2020-01-01'</span>;
+
+  <span class="comment">// Fetch everything in parallel for speed</span>
+  <span class="keyword">const</span> [
+    cpiYoY_q,      <span class="comment">// CPI YoY%, quarterly</span>
+    cpiYoY_a,      <span class="comment">// CPI YoY%, annual</span>
+    cpiMoM,        <span class="comment">// CPI MoM%</span>
+    coreCpiYoY_q,  <span class="comment">// Core CPI YoY%, quarterly</span>
+    ppiYoY_q,      <span class="comment">// PPI YoY%, quarterly</span>
+    ppiYoY_a,      <span class="comment">// PPI YoY%, annual</span>
+    ppiMoM,        <span class="comment">// PPI MoM%</span>
+    corePpiYoY_q,  <span class="comment">// Core PPI YoY%, quarterly</span>
+    nfpLevel_q,    <span class="comment">// Nonfarm payrolls, quarterly total</span>
+    nfpChange,     <span class="comment">// NFP month-over-month change</span>
+    unrate_q,      <span class="comment">// Unemployment rate, quarterly</span>
+    aheYoY_q,      <span class="comment">// Avg Hourly Earnings YoY%</span>
+    jolts_q,       <span class="comment">// JOLTS openings, quarterly</span>
+    u6rate,        <span class="comment">// U-6 rate</span>
+    lfpr,          <span class="comment">// Labor force participation</span>
+  ] = <span class="keyword">await</span> Promise.all([
+    fetchFRED(<span class="string">'CPIAUCSL'</span>,  start, <span class="string">'pc1'</span>, <span class="string">'q'</span>),
+    fetchFRED(<span class="string">'CPIAUCSL'</span>,  start, <span class="string">'pc1'</span>, <span class="string">'a'</span>),
+    fetchFRED(<span class="string">'CPIAUCSL'</span>,  start, <span class="string">'pch'</span>, <span class="string">'m'</span>),
+    fetchFRED(<span class="string">'CPILFESL'</span>,  start, <span class="string">'pc1'</span>, <span class="string">'q'</span>),
+    fetchFRED(<span class="string">'PPIFIS'</span>,    start, <span class="string">'pc1'</span>, <span class="string">'q'</span>),
+    fetchFRED(<span class="string">'PPIFIS'</span>,    start, <span class="string">'pc1'</span>, <span class="string">'a'</span>),
+    fetchFRED(<span class="string">'PPIFIS'</span>,    start, <span class="string">'pch'</span>, <span class="string">'m'</span>),
+    fetchFRED(<span class="string">'PPIFES'</span>,    start, <span class="string">'pc1'</span>, <span class="string">'q'</span>),
+    fetchFRED(<span class="string">'PAYEMS'</span>,    start, <span class="string">'chg'</span>, <span class="string">'q'</span>),
+    fetchFRED(<span class="string">'PAYEMS'</span>,    start, <span class="string">'chg'</span>, <span class="string">'m'</span>),
+    fetchFRED(<span class="string">'UNRATE'</span>,    start, <span class="string">'lin'</span>, <span class="string">'q'</span>),
+    fetchFRED(<span class="string">'CES0500000003'</span>, start, <span class="string">'pc1'</span>, <span class="string">'q'</span>),
+    fetchFRED(<span class="string">'JTSJOL'</span>,    start, <span class="string">'lin'</span>, <span class="string">'q'</span>),
+    fetchFRED(<span class="string">'U6RATE'</span>,    start, <span class="string">'lin'</span>, <span class="string">'m'</span>),
+    fetchFRED(<span class="string">'CIVPART'</span>,   start, <span class="string">'lin'</span>, <span class="string">'m'</span>),
+  ]);
+
+  <span class="comment">// ── Convert FRED arrays into your DATA object format ──</span>
+  <span class="comment">// Helper: converts [{date, value}] to {"2024-Q1": 3.2, ...}</span>
+  <span class="keyword">function</span> <span class="var">toQuarterlyMap</span>(arr) {
+    <span class="keyword">const</span> map = {};
+    arr.forEach(({ date, value }) => {
+      <span class="keyword">const</span> d = <span class="keyword">new</span> Date(date);
+      <span class="keyword">const</span> q = Math.ceil((d.getMonth() + <span class="num">1</span>) / <span class="num">3</span>);
+      map[<span class="string">`${d.getFullYear()}-Q${q}`</span>] = Math.round(value * <span class="num">10</span>) / <span class="num">10</span>;
+    });
+    <span class="keyword">return</span> map;
+  }
+
+  <span class="comment">// Helper: converts [{date, value}] to {2020: 1.2, 2021: 4.7, ...}</span>
+  <span class="keyword">function</span> <span class="var">toAnnualMap</span>(arr) {
+    <span class="keyword">const</span> map = {};
+    arr.forEach(({ date, value }) => {
+      map[<span class="keyword">new</span> Date(date).getFullYear()] = Math.round(value * <span class="num">10</span>) / <span class="num">10</span>;
+    });
+    <span class="keyword">return</span> map;
+  }
+
+  <span class="comment">// Now populate your DATA object:</span>
+  DATA.cpi.quarterly     = toQuarterlyMap(cpiYoY_q);
+  DATA.cpi.annual        = toAnnualMap(cpiYoY_a);
+  DATA.cpiCore.quarterly = toQuarterlyMap(coreCpiYoY_q);
+  DATA.ppi.quarterly     = toQuarterlyMap(ppiYoY_q);
+  DATA.ppi.annual        = toAnnualMap(ppiYoY_a);
+  DATA.ppiCore.quarterly = toQuarterlyMap(corePpiYoY_q);
+  DATA.nfp.quarterly     = toQuarterlyMap(nfpLevel_q);
+  DATA.unrate.quarterly  = toQuarterlyMap(unrate_q);
+  DATA.ahe.quarterly     = toQuarterlyMap(aheYoY_q);
+  DATA.jolts.quarterly   = toQuarterlyMap(jolts_q);
+
+  <span class="comment">// Latest values from the most recent monthly observations</span>
+  <span class="keyword">const</span> last = arr => arr[arr.length - <span class="num">1</span>]?.value ?? <span class="keyword">null</span>;
+  <span class="keyword">const</span> prev = arr => arr[arr.length - <span class="num">2</span>]?.value ?? <span class="keyword">null</span>;
+
+  DATA.cpi.latest     = last(cpiYoY_q);
+  DATA.cpi.prevMonth  = prev(cpiYoY_q);
+  DATA.cpi.mom        = last(cpiMoM);
+  DATA.ppi.latest     = last(ppiYoY_q);
+  DATA.ppi.prevMonth  = prev(ppiYoY_q);
+  DATA.ppi.mom        = last(ppiMoM);
+  DATA.unrate.latest  = last(unrate_q);
+  DATA.unrate.u6      = last(u6rate);
+  DATA.unrate.lfpr    = last(lfpr);
+  DATA.nfp.latestMonth = last(nfpChange);
+  DATA.nfp.prevMonth   = prev(nfpChange);
+
+  <span class="comment">// Re-render the dashboard with live data</span>
+  buildSummaryCards();
+  buildTicker();
+  renderView(currentView);
+
+  console.log(<span class="string">'✓ Live FRED data loaded'</span>, DATA);
+}
+
+<span class="comment">// ── Call on page load ──</span>
+loadAllData();</pre>
+
+<h3>3D — Where Exactly to Paste It</h3>
+
+<p>Open your <code>index.html</code> and find the <code>&lt;script&gt;</code> tag near the bottom. The structure should be:</p>
+
+<pre><span class="comment">// 1. Keep your existing DATA object as the FALLBACK
+//    (it loads instantly while APIs are fetching)</span>
+
+<span class="keyword">const</span> DATA = { ... };  <span class="comment">// ← your existing static data stays here</span>
+
+<span class="comment">// 2. Paste the FRED API MODULE here (fetchFRED function)
+
+// 3. Paste loadAllData() here
+
+// 4. Everything else (chart functions, renderers, etc.) stays the same</span>
+
+<span class="comment">// 5. At the very bottom, AFTER renderView('overview'), add:</span>
+loadAllData();  <span class="comment">// ← this overwrites static data with live data</span></pre>
+
+<div class="tip">
+  <strong>Why keep the static data?</strong> It acts as a fallback. The page renders instantly with static numbers, then FRED data loads in 1-2 seconds and overwrites them. The user sees no blank screen or loading spinner.
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- STEP 4: AUTO-REFRESH -->
+<!-- ═══════════════════════════════════════ -->
+<h2>Step 4 — Auto-Refresh on a Schedule</h2>
+
+<p>To make it behave like a Bloomberg terminal that stays current throughout the day:</p>
+
+<pre><span class="comment">// Refresh data every 5 minutes (300,000 ms)
+// FRED rate limit is 120/min so this is very safe</span>
+setInterval(() => {
+  loadAllData();
+  console.log(<span class="string">'↻ Data refreshed at'</span>, <span class="keyword">new</span> Date().toLocaleTimeString());
+}, <span class="num">300000</span>);
+
+<span class="comment">// For BLS release mornings (8:30 AM ET), you could poll more aggressively:
+// setInterval(loadAllData, 30000); // every 30 seconds</span></pre>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- STEP 5: CORS / PROXY FOR BLS -->
+<!-- ═══════════════════════════════════════ -->
+<h2>Step 5 — If You Need BLS Direct (Advanced)</h2>
+
+<p>If you need same-morning BLS data before FRED updates, you'll need a small proxy because BLS blocks browser requests (CORS). Two options:</p>
+
+<h3>Option A: Cloudflare Worker (Free, 5 Min Setup)</h3>
+
+<pre><span class="comment">// Deploy this as a Cloudflare Worker at workers.dev</span>
+<span class="keyword">export default</span> {
+  <span class="keyword">async</span> fetch(request) {
+    <span class="keyword">const</span> url = <span class="keyword">new</span> URL(request.url);
+    <span class="keyword">const</span> blsUrl = <span class="string">'https://api.bls.gov/publicAPI/v2/timeseries/data/'</span>;
+
+    <span class="keyword">const</span> body = <span class="keyword">await</span> request.json();
+    <span class="keyword">const</span> resp = <span class="keyword">await</span> fetch(blsUrl, {
+      method: <span class="string">'POST'</span>,
+      headers: { <span class="string">'Content-Type'</span>: <span class="string">'application/json'</span> },
+      body: JSON.stringify(body)
+    });
+
+    <span class="keyword">const</span> data = <span class="keyword">await</span> resp.json();
+    <span class="keyword">return new</span> Response(JSON.stringify(data), {
+      headers: {
+        <span class="string">'Content-Type'</span>: <span class="string">'application/json'</span>,
+        <span class="string">'Access-Control-Allow-Origin'</span>: <span class="string">'*'</span>,
+      }
+    });
+  }
+};</pre>
+
+<h3>Option B: Simple Node.js Proxy (If You Prefer Local)</h3>
+
+<pre><span class="comment">// server.js — run with: node server.js</span>
+<span class="keyword">const</span> express = require(<span class="string">'express'</span>);
+<span class="keyword">const</span> fetch = require(<span class="string">'node-fetch'</span>);
+<span class="keyword">const</span> app = express();
+app.use(express.json());
+app.use(express.static(<span class="string">'.'</span>));  <span class="comment">// serves your index.html</span>
+
+app.post(<span class="string">'/api/bls'</span>, <span class="keyword">async</span> (req, res) => {
+  <span class="keyword">const</span> resp = <span class="keyword">await</span> fetch(
+    <span class="string">'https://api.bls.gov/publicAPI/v2/timeseries/data/'</span>,
+    { method: <span class="string">'POST'</span>,
+      headers: { <span class="string">'Content-Type'</span>: <span class="string">'application/json'</span> },
+      body: JSON.stringify(req.body) }
+  );
+  res.json(<span class="keyword">await</span> resp.json());
+});
+
+app.listen(<span class="num">3000</span>, () => console.log(<span class="string">'Proxy on http://localhost:3000'</span>));</pre>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- API KEY TESTER -->
+<!-- ═══════════════════════════════════════ -->
+<h2>Step 6 — Test Your API Key Right Now</h2>
+
+<p>Paste your FRED key below and click Test. This calls the real FRED API from your browser to verify everything works:</p>
+
+<div class="config-panel">
+  <label>FRED API Key</label>
+  <input type="text" id="fredKey" placeholder="Paste your 32-character key here..." spellcheck="false">
+
+  <label>Series to Test</label>
+  <input type="text" id="testSeries" value="CPIAUCSL" placeholder="e.g. CPIAUCSL">
+
+  <div style="display:flex;gap:12px;margin-top:20px;">
+    <button onclick="testFredApi()">Test Connection</button>
+    <button onclick="testAllSeries()" style="background:var(--accent-blue);">Test All Dashboard Series</button>
+    <button onclick="saveKey()" style="background:var(--accent-green);">Save Key to localStorage</button>
+  </div>
+
+  <div id="testResults"></div>
+</div>
+
+<script>
+async function testFredApi() {
+  const key = document.getElementById('fredKey').value.trim();
+  const series = document.getElementById('testSeries').value.trim();
+  const results = document.getElementById('testResults');
+
+  if (!key) { results.innerHTML = '<span class="result-error">✗ Enter your API key first</span>'; return; }
+
+  results.innerHTML = '<span class="result-info">⏳ Fetching from FRED...</span>';
+
+  try {
+    const url = `https://api.stlouisfed.org/fred/series/observations?series_id=${series}&api_key=${key}&file_type=json&observation_start=2024-01-01&units=pc1&frequency=m&sort_order=desc&limit=6`;
+    const res = await fetch(url);
+    const json = await res.json();
+
+    if (json.error_code) {
+      results.innerHTML = `<span class="result-error">✗ FRED Error: ${json.error_message}</span>`;
+      return;
+    }
+
+    const obs = json.observations;
+    let output = `<span class="result-success">✓ SUCCESS — ${series} returned ${obs.length} observations</span>\n\n`;
+    output += `<span class="result-info">Latest data points (YoY % change):</span>\n`;
+    obs.slice(0, 6).forEach(o => {
+      const val = parseFloat(o.value);
+      const color = val > 3 ? 'result-error' : val > 2 ? 'result-info' : 'result-success';
+      output += `  ${o.date}  →  <span class="${color}">${val.toFixed(2)}%</span>\n`;
+    });
+
+    results.innerHTML = output;
+  } catch (err) {
+    results.innerHTML = `<span class="result-error">✗ Network error: ${err.message}\n\nThis might be a CORS issue or invalid key.</span>`;
+  }
+}
+
+async function testAllSeries() {
+  const key = document.getElementById('fredKey').value.trim();
+  const results = document.getElementById('testResults');
+
+  if (!key) { results.innerHTML = '<span class="result-error">✗ Enter your API key first</span>'; return; }
+
+  const allSeries = [
+    ['CPIAUCSL', 'CPI All Items'],
+    ['CPILFESL', 'CPI Core'],
+    ['PPIFIS', 'PPI Final Demand'],
+    ['PPIFES', 'PPI Core'],
+    ['PAYEMS', 'Nonfarm Payrolls'],
+    ['UNRATE', 'Unemployment Rate'],
+    ['CES0500000003', 'Avg Hourly Earnings'],
+    ['JTSJOL', 'JOLTS Openings'],
+    ['U6RATE', 'U-6 Rate'],
+    ['CIVPART', 'LFPR'],
+  ];
+
+  results.innerHTML = '<span class="result-info">⏳ Testing all series...</span>\n';
+
+  for (const [id, name] of allSeries) {
+    try {
+      const url = `https://api.stlouisfed.org/fred/series/observations?series_id=${id}&api_key=${key}&file_type=json&observation_start=2024-01-01&limit=1&sort_order=desc`;
+      const res = await fetch(url);
+      const json = await res.json();
+
+      if (json.error_code) {
+        results.innerHTML += `<span class="result-error">✗ ${name} (${id}): ${json.error_message}</span>\n`;
+      } else {
+        const latest = json.observations[0];
+        results.innerHTML += `<span class="result-success">✓ ${name.padEnd(22)} (${id.padEnd(16)})  latest: ${latest.date} = ${latest.value}</span>\n`;
+      }
+    } catch (err) {
+      results.innerHTML += `<span class="result-error">✗ ${name} (${id}): ${err.message}</span>\n`;
+    }
+  }
+
+  results.innerHTML += `\n<span class="result-info">Done. All ✓ series are ready for your dashboard.</span>`;
+}
+
+function saveKey() {
+  const key = document.getElementById('fredKey').value.trim();
+  if (key) {
+    localStorage.setItem('fred_api_key', key);
+    document.getElementById('testResults').innerHTML = '<span class="result-success">✓ Key saved to localStorage. Your dashboard will use it automatically.</span>';
+  }
+}
+</script>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- SECURITY -->
+<!-- ═══════════════════════════════════════ -->
+<h2>Security Note on API Keys</h2>
+
+<div class="warning">
+  <strong>API keys in frontend code are visible to anyone.</strong> For these specific APIs (FRED, BLS, BEA), this is acceptable because they are free government APIs with no billing. But follow these rules:
+  <br><br>
+  • Never use this pattern for paid APIs (Finnhub, Alpha Vantage with premium, etc.)<br>
+  • The <code>localStorage</code> approach keeps your key out of your GitHub repository<br>
+  • If deploying publicly, consider a Cloudflare Worker or Vercel serverless function to hide the key<br>
+  • For Ghost Strategies client tools, always use environment variables in a backend
+</div>
+
+<h2>Quick Reference — Common FRED API Calls</h2>
+
+<pre><span class="comment">// CPI YoY% — quarterly — last 5 years</span>
+<span class="url">https://api.stlouisfed.org/fred/series/observations
+  ?series_id=CPIAUCSL
+  &api_key=YOUR_KEY
+  &file_type=json
+  &observation_start=2020-01-01
+  &units=pc1
+  &frequency=q</span>
+
+<span class="comment">// NFP month-over-month change — monthly</span>
+<span class="url">https://api.stlouisfed.org/fred/series/observations
+  ?series_id=PAYEMS
+  &api_key=YOUR_KEY
+  &file_type=json
+  &observation_start=2024-01-01
+  &units=chg
+  &frequency=m</span>
+
+<span class="comment">// Unemployment rate — raw level — quarterly</span>
+<span class="url">https://api.stlouisfed.org/fred/series/observations
+  ?series_id=UNRATE
+  &api_key=YOUR_KEY
+  &file_type=json
+  &observation_start=2020-01-01
+  &units=lin
+  &frequency=q</span>
+
+<span class="comment">// PPI MoM% — monthly</span>
+<span class="url">https://api.stlouisfed.org/fred/series/observations
+  ?series_id=PPIFIS
+  &api_key=YOUR_KEY
+  &file_type=json
+  &observation_start=2024-01-01
+  &units=pch
+  &frequency=m</span></pre>
+
+<div class="footer" style="margin-top:60px;padding-top:20px;border-top:1px solid var(--border);text-align:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-muted);">
+  GHOST STRATEGIES LLC — API Integration Guide v1.0
+</div>
+
+</body>
+</html>
