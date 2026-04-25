@@ -1,4 +1,4 @@
-# GHOST STRATEGIES — Economic Indicators Terminal
+# Economic Indicators Terminal
 
 A Bloomberg terminal-style dashboard for tracking CPI, PPI, and employment data with quarterly/annual views, projections, correlation matrices, and scenario analysis.
 
