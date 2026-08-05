@@ -4,3 +4,8 @@ Thumbs.db
 .vscode/
 .idea/
 node_modules/
+
+# Planning docs stay in the private working copy (per build spec section 4)
+economic-terminal-kickoff-prompt.md
+news-analysis-tab-build-spec.md
+model-bench-terminal-build-spec.md

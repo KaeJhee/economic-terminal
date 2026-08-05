@@ -35,6 +35,12 @@ class ProxyHandler(SimpleHTTPRequestHandler):
             url = f'https://apps.bea.gov/api/data?{query}'
             self._proxy_get(url)
 
+        # ── Stooq Proxy (daily price CSV): /api/stooq?s=smh.us&i=d&d1=...&d2=... ──
+        elif self.path.startswith('/api/stooq?') or self.path.startswith('/api/stooq/?'):
+            query = self.path.split('?', 1)[1] if '?' in self.path else ''
+            url = f'https://stooq.com/q/d/l/?{query}'
+            self._proxy_get(url, content_type='text/csv')
+
         # ── Static files (index.html, etc.) ──
         else:
             super().do_GET()
@@ -49,7 +55,7 @@ class ProxyHandler(SimpleHTTPRequestHandler):
         else:
             self.send_error(404)
 
-    def _proxy_get(self, url):
+    def _proxy_get(self, url, content_type='application/json'):
         """Forward a GET request and return the response with CORS headers."""
         try:
             req = urllib.request.Request(url)
@@ -57,7 +63,7 @@ class ProxyHandler(SimpleHTTPRequestHandler):
             with urllib.request.urlopen(req, timeout=15) as resp:
                 data = resp.read()
                 self.send_response(200)
-                self.send_header('Content-Type', 'application/json')
+                self.send_header('Content-Type', content_type)
                 self.send_header('Access-Control-Allow-Origin', '*')
                 self.end_headers()
                 self.wfile.write(data)
