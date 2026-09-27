@@ -89,58 +89,85 @@
 
 <button class="copy-btn" onclick="copyCode()">Copy to Clipboard</button>
 
-<pre id="workerCode">export default {
+<pre id="workerCode">// Example proxy for https://economic.ghoststrategies.io only.
+// Rate limit is per Worker isolate (best-effort, about 60 requests per minute per IP), not a global counter.
+const ALLOWED_ORIGIN = 'https://economic.ghoststrategies.io';
+const WINDOW_MS = 60000;
+const LIMIT = 60;
+const hits = new Map();
+
+function corsHeaders() {
+  return {
+    'Access-Control-Allow-Origin': ALLOWED_ORIGIN,
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Vary': 'Origin',
+    // Query strings contain api_key. Do not cache them.
+    'Cache-Control': 'private, no-store',
+  };
+}
+
+function rateLimited(ip) {
+  const now = Date.now();
+  const recent = (hits.get(ip) || []).filter(t => now - t < WINDOW_MS);
+  if (recent.length >= LIMIT) {
+    hits.set(ip, recent);
+    return true;
+  }
+  recent.push(now);
+  hits.set(ip, recent);
+  return false;
+}
+
+export default {
   async fetch(request) {
-    // Handle CORS preflight
+    const origin = request.headers.get('Origin') || '';
+    if (origin !== ALLOWED_ORIGIN) {
+      return new Response(JSON.stringify({ error: 'origin not allowed' }), {
+        status: 403,
+        headers: { 'Content-Type': 'application/json', 'Cache-Control': 'private, no-store' },
+      });
+    }
+
     if (request.method === 'OPTIONS') {
-      return new Response(null, {
-        headers: {
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type',
-        }
+      return new Response(null, { headers: corsHeaders() });
+    }
+
+    const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+    if (rateLimited(ip)) {
+      return new Response(JSON.stringify({ error: 'rate limit' }), {
+        status: 429,
+        headers: { ...corsHeaders(), 'Content-Type': 'application/json' },
       });
     }
 
     const url = new URL(request.url);
-    const params = url.search; // everything after the ?
     let targetUrl;
     let fetchOptions = {};
 
     if (request.method === 'POST') {
-      // ── BLS: POST requests ──
       targetUrl = 'https://api.bls.gov/publicAPI/v2/timeseries/data/';
-      const body = await request.text();
       fetchOptions = {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: body,
+        body: await request.text(),
       };
     } else {
-      // ── FRED: GET requests with query params ──
-      targetUrl = 'https://api.stlouisfed.org/fred/series/observations' + params;
+      targetUrl = 'https://api.stlouisfed.org/fred/series/observations' + url.search;
       fetchOptions = { method: 'GET' };
     }
 
     try {
       const resp = await fetch(targetUrl, fetchOptions);
       const data = await resp.text();
-
       return new Response(data, {
         status: resp.status,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-          'Cache-Control': 'public, max-age=300',
-        }
+        headers: { ...corsHeaders(), 'Content-Type': 'application/json' },
       });
     } catch (err) {
       return new Response(JSON.stringify({ error: err.message }), {
         status: 502,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-        }
+        headers: { ...corsHeaders(), 'Content-Type': 'application/json' },
       });
     }
   }
@@ -148,11 +175,12 @@
 
 <h3>What Each Section Does</h3>
 <ul>
-  <li><strong>OPTIONS handler (lines 3-11):</strong> Browsers send a "preflight" OPTIONS request before the real one. This tells the browser "yes, I accept requests from any origin."</li>
-  <li><strong>POST branch (lines 17-24):</strong> If the dashboard sends a POST (used for BLS), forward it to the BLS API with the JSON body intact.</li>
-  <li><strong>GET branch (lines 26-29):</strong> If the dashboard sends a GET (used for FRED), take all the query parameters (<code>?series_id=CPIAUCSL&amp;api_key=...&amp;units=pc1</code>) and forward them to FRED's endpoint.</li>
-  <li><strong>Response (lines 32-40):</strong> Return whatever FRED/BLS sent back, but add <code>Access-Control-Allow-Origin: *</code> so the browser allows it. Also adds 5-minute caching to reduce redundant calls.</li>
-  <li><strong>Error handling (lines 41-48):</strong> If the upstream API is down or unreachable, return a clean JSON error instead of crashing.</li>
+  <li><strong>Allowed origin:</strong> The Worker answers only when the browser sends <code>Origin: https://economic.ghoststrategies.io</code>. Other sites get 403. Local development uses <code>server.py</code>, not this Worker, so localhost is not on the allowlist.</li>
+  <li><strong>Rate limit:</strong> About 60 requests per minute per IP, counted in memory inside one isolate. Cloudflare can run many isolates, so this is a basic brake, not a global quota.</li>
+  <li><strong>OPTIONS:</strong> Preflight responses allow that one origin.</li>
+  <li><strong>POST:</strong> BLS requests are forwarded with the JSON body intact.</li>
+  <li><strong>GET:</strong> FRED requests are forwarded with the query string, including <code>api_key</code>.</li>
+  <li><strong>No cache:</strong> Every response sends <code>Cache-Control: private, no-store</code>. A public cache would store URLs that contain API keys.</li>
 </ul>
 
 <!-- ═══════════════════════════════════════ -->
@@ -308,14 +336,14 @@
 <span style="color:var(--green)">https://ghost-api-proxy.YOUR_SUBDOMAIN.workers.dev?series_id=CPIAUCSL&...</span></pre>
 
 <p>
-  The Worker receives the exact same query parameters, forwards them to FRED, gets the response, adds the <code>Access-Control-Allow-Origin: *</code> header, and returns it. The dashboard doesn't know the difference — it gets the same JSON either way.
+  The Worker receives the same query parameters, forwards them to FRED, and returns the JSON with <code>Access-Control-Allow-Origin</code> set to <code>https://economic.ghoststrategies.io</code> only. Responses are <code>private, no-store</code> because the URL contains the API key.
 </p>
 
 <!-- ═══════════════════════════════════════ -->
 <h2>Security Considerations</h2>
 
 <div class="warn">
-  <strong>Your FRED API key is visible in the Worker request URL.</strong> This is the same as any browser-based API call — the key travels in the query string. For FRED and BLS (free government APIs with no billing), this is acceptable. If you later use this pattern with paid APIs, you'd store the key as a <a href="https://developers.cloudflare.com/workers/configuration/secrets/" target="_blank" style="color:var(--orange)">Cloudflare Worker Secret</a> instead of passing it in the URL.
+  <strong>Your FRED API key is visible in the Worker request URL.</strong> This is the same as any browser-based API call — the key travels in the query string. The example Worker does not cache those URLs. It also refuses every origin except the live site. For FRED and BLS (free government APIs with no billing), a key in the query string is the pattern this dashboard uses. If you later use this pattern with paid APIs, store the key as a <a href="https://developers.cloudflare.com/workers/configuration/secrets/" target="_blank" style="color:var(--orange)">Cloudflare Worker Secret</a> instead of passing it in the URL. You still have to paste this Worker into your Cloudflare account and put its URL in the dashboard settings. Nothing in the repo deploys it for you.
 </div>
 
 <!-- ═══════════════════════════════════════ -->
@@ -331,7 +359,9 @@
   <tr><td style="padding:8px;border-bottom:1px solid var(--border);color:var(--text2);">Worker name</td><td style="padding:8px;border-bottom:1px solid var(--border);color:var(--orange);">ghost-api-proxy</td></tr>
   <tr><td style="padding:8px;border-bottom:1px solid var(--border);color:var(--text2);">Your Worker URL</td><td style="padding:8px;border-bottom:1px solid var(--border);color:var(--green);">https://ghost-api-proxy.SUBDOMAIN.workers.dev</td></tr>
   <tr><td style="padding:8px;border-bottom:1px solid var(--border);color:var(--text2);">Handles</td><td style="padding:8px;border-bottom:1px solid var(--border);">FRED (GET) + BLS (POST)</td></tr>
-  <tr><td style="padding:8px;border-bottom:1px solid var(--border);color:var(--text2);">Cache</td><td style="padding:8px;border-bottom:1px solid var(--border);">5 min (Cache-Control header)</td></tr>
+  <tr><td style="padding:8px;border-bottom:1px solid var(--border);color:var(--text2);">Allowed origin</td><td style="padding:8px;border-bottom:1px solid var(--border);">https://economic.ghoststrategies.io</td></tr>
+  <tr><td style="padding:8px;border-bottom:1px solid var(--border);color:var(--text2);">Rate limit</td><td style="padding:8px;border-bottom:1px solid var(--border);">About 60/min per IP, per isolate</td></tr>
+  <tr><td style="padding:8px;border-bottom:1px solid var(--border);color:var(--text2);">Cache</td><td style="padding:8px;border-bottom:1px solid var(--border);">none (Cache-Control: private, no-store)</td></tr>
   <tr><td style="padding:8px;border-bottom:1px solid var(--border);color:var(--text2);">Dashboard field</td><td style="padding:8px;border-bottom:1px solid var(--border);">Settings → CORS Proxy URL</td></tr>
 </table>
 

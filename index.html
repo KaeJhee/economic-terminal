@@ -3,9 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self' https: http://127.0.0.1:* http://localhost:*; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
 <title>GHOST STRATEGIES | Economic Indicators Terminal</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-annotation/3.0.1/chartjs-plugin-annotation.min.js"></script>
+<script src="vendor/chart.umd.min.js"></script>
+<script src="vendor/chartjs-plugin-annotation.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -32,13 +33,17 @@
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
+  html, body {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
   body {
     background: var(--bg-primary);
     color: var(--text-primary);
     font-family: 'IBM Plex Sans', sans-serif;
     font-size: 13px;
     line-height: 1.4;
-    overflow-x: hidden;
   }
 
   /* TOP BAR */
@@ -49,9 +54,13 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px 16px;
     position: sticky;
     top: 0;
     z-index: 100;
+    max-width: 100%;
+    min-width: 0;
   }
 
   .top-bar-left {
@@ -90,9 +99,11 @@
     width: 6px;
     height: 6px;
     border-radius: 50%;
-    background: var(--accent-green);
+    background: var(--text-muted);
     animation: pulse 2s infinite;
   }
+
+  .status-dot.idle { animation: none; }
 
   @keyframes pulse {
     0%, 100% { opacity: 1; }
@@ -102,10 +113,12 @@
   .top-bar-right {
     display: flex;
     align-items: center;
-    gap: 20px;
+    flex-wrap: wrap;
+    gap: 8px 16px;
     font-family: 'JetBrains Mono', monospace;
     font-size: 11px;
     color: var(--text-secondary);
+    min-width: 0;
   }
 
   .clock { color: var(--accent-cyan); font-weight: 500; }
@@ -117,6 +130,8 @@
     padding: 6px 0;
     overflow: hidden;
     white-space: nowrap;
+    max-width: 100%;
+    min-width: 0;
   }
 
   .ticker-content {
@@ -150,9 +165,14 @@
     background: var(--bg-secondary);
     border-bottom: 1px solid var(--border);
     padding: 0 20px;
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: auto;
   }
 
   .nav-tab {
+    flex: 0 0 auto;
+    white-space: nowrap;
     padding: 10px 20px;
     font-family: 'JetBrains Mono', monospace;
     font-size: 11px;
@@ -175,12 +195,16 @@
     gap: 1px;
     background: var(--border);
     padding: 1px;
+    max-width: 100%;
+    min-width: 0;
   }
 
   .panel {
     background: var(--bg-card);
     padding: 16px;
     min-height: 0;
+    min-width: 0;
+    max-width: 100%;
   }
 
   .panel-full { grid-column: 1 / -1; }
@@ -229,6 +253,8 @@
     gap: 1px;
     background: var(--border);
     margin-bottom: 1px;
+    max-width: 100%;
+    min-width: 0;
   }
 
   .summary-card {
@@ -353,12 +379,14 @@
   .projection-bar {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
     gap: 12px;
     padding: 8px 12px;
     border: 1px solid var(--border);
     border-radius: 3px;
     margin-bottom: 8px;
     background: var(--bg-tertiary);
+    min-width: 0;
   }
 
   .projection-label {
@@ -390,7 +418,7 @@
     gap: 16px;
     font-family: 'JetBrains Mono', monospace;
     font-size: 11px;
-    min-width: 180px;
+    min-width: 0;
     justify-content: flex-end;
   }
 
@@ -401,9 +429,13 @@
     padding: 8px 20px;
     display: flex;
     justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 6px 16px;
     font-family: 'JetBrains Mono', monospace;
     font-size: 10px;
     color: var(--text-muted);
+    max-width: 100%;
+    min-width: 0;
   }
 
   .footer-cmd {
@@ -467,6 +499,16 @@
     .dashboard { grid-template-columns: 1fr; }
   }
 
+  @media (max-width: 720px) {
+    .summary-grid { grid-template-columns: 1fr 1fr; }
+    .top-bar, .footer, .nav-tabs { padding-left: 10px; padding-right: 10px; }
+    .logo span { display: none; }
+    .summary-card { padding: 12px 8px; }
+    .summary-card .value { font-size: 18px; }
+    .nav-tab { padding: 10px 12px; }
+    .dashboard { grid-template-columns: 1fr; }
+  }
+
   .section-divider {
     grid-column: 1 / -1;
     background: var(--bg-secondary);
@@ -477,15 +519,6 @@
     text-transform: uppercase;
     letter-spacing: 2px;
     border-bottom: 1px solid var(--accent-orange);
-  }
-
-  .update-flash {
-    animation: flash 1.5s ease;
-  }
-
-  @keyframes flash {
-    0% { background: rgba(255,149,0,0.15); }
-    100% { background: transparent; }
   }
 
   .matrix-scroll {
@@ -637,6 +670,14 @@
   .news-send-btn:disabled { opacity: 0.4; cursor: default; }
 
   .news-status { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--accent-cyan); }
+  .news-explainer { font-size: 13px; color: var(--text-secondary); line-height: 1.55; margin: 4px 0 16px; }
+  .news-explainer strong { color: var(--text-primary); font-weight: 600; }
+  .news-example { border: 1px dashed var(--border-accent); border-radius: 4px; padding: 14px; margin-top: 8px; }
+  .news-example-kicker { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--accent-yellow); margin-bottom: 8px; }
+  .news-recorded-slot, .news-recorded { margin: 12px 0; padding: 12px; border: 1px solid var(--border); background: var(--bg-tertiary); font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-secondary); }
+  .news-recorded img, .news-recorded video { max-width: 100%; height: auto; display: block; }
+  .news-recorded figcaption { margin-top: 8px; }
+  .news-chart-placeholder { height: 120px; margin: 12px 0; border: 1px dashed var(--border-accent); display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; font-size: 11px; text-align: center; padding: 8px; }
 
   .news-narrative { font-size: 13px; line-height: 1.65; margin: 12px 0; }
   .news-narrative p { margin-bottom: 10px; }
@@ -718,7 +759,7 @@
   <div class="top-bar-left">
     <div class="logo">GHOST STRATEGIES<span>Economic Indicators Terminal</span></div>
     <div class="market-status" id="marketStatus">
-      <div class="status-dot" id="statusDot"></div>
+      <div class="status-dot idle" id="statusDot"></div>
       <span id="feedLabel">STATIC MODE</span>
     </div>
   </div>
@@ -793,9 +834,9 @@
 
 <!-- FOOTER -->
 <div class="footer">
-  <span>GHOST STRATEGIES LLC | ECONOMIC INDICATORS TERMINAL v2.1</span>
+  <span>GHOST STRATEGIES LLC | ECONOMIC INDICATORS TERMINAL v2.2</span>
   <span>Sources: Bureau of Labor Statistics, Bureau of Economic Analysis, Federal Reserve Economic Data</span>
-  <span>Auto-refresh: <span class="footer-cmd">60s</span> | Next BLS Release: <span id="nextRelease">--</span></span>
+  <span>Auto-refresh: <span class="footer-cmd" id="refreshCadence">off</span> | Next BLS Release: <span id="nextRelease">--</span></span>
 </div>
 
 <script>
@@ -803,181 +844,210 @@
 // DATA STORE — BLS / BEA / FRED structured data
 // ═══════════════════════════════════════════
 const DATA = {
-  // CPI-U (All Urban Consumers, All Items, SA) — YoY % change
+  // Snapshot fetched 2026-09-27 from FRED (BLS and BEA series). Method and
+  // release dates are in snapshot-sources.md. October 2025 CPI and unemployment
+  // were not published (BLS value "-"), so 2025-Q4 and the 2025 annual are
+  // omitted for those series. Quarterly price figures are the percent change
+  // in the 3-month average index from the same quarter a year earlier.
+  // "latest" is the latest monthly observation, not that quarterly average.
+  // projected Q3/Q4 values are the prior file's illustrative scenario, not a
+  // forecast, and are not plotted on the overview.
+
   cpi: {
     label: "CPI-U All Items",
     unit: "%",
-    annual: {
-      2020: 1.2, 2021: 4.7, 2022: 8.0, 2023: 4.1, 2024: 2.9, 2025: 2.6
-    },
+    annual: { 2020: 1.3, 2021: 4.7, 2022: 8.0, 2023: 4.1, 2024: 3.0 },
     quarterly: {
-      "2023-Q1": 6.0, "2023-Q2": 4.0, "2023-Q3": 3.6, "2023-Q4": 3.2,
-      "2024-Q1": 3.2, "2024-Q2": 3.3, "2024-Q3": 2.6, "2024-Q4": 2.7,
-      "2025-Q1": 2.8, "2025-Q2": 2.7, "2025-Q3": 2.5, "2025-Q4": 2.4,
-      "2026-Q1": 2.4
+      "2023-Q1": 5.7, "2023-Q2": 4.0, "2023-Q3": 3.6, "2023-Q4": 3.2,
+      "2024-Q1": 3.2, "2024-Q2": 3.2, "2024-Q3": 2.7, "2024-Q4": 2.7,
+      "2025-Q1": 2.7, "2025-Q2": 2.5, "2025-Q3": 2.9,
+      "2026-Q1": 2.7, "2026-Q2": 3.8
     },
-    projected: { "2026-Q2": 2.3, "2026-Q3": 2.2, "2026-Q4": 2.1 },
-    latest: 3.3,
-    prevMonth: 2.4,
-    mom: 0.9,
+    projected: { "2026-Q3": 2.2, "2026-Q4": 2.1 },
+    latest: 3.4,
+    prevMonth: 3.3,
+    mom: 0.4,
     target: 2.0,
-    releaseDate: "2026-03-12"
+    asOf: "2026-08-01",
+    releaseDate: "2026-09-11"
   },
 
-  // CPI Core (Less Food & Energy)
   cpiCore: {
     label: "CPI Core (ex F&E)",
     unit: "%",
-    annual: {
-      2020: 1.7, 2021: 3.6, 2022: 6.2, 2023: 4.8, 2024: 3.4, 2025: 3.2
-    },
+    annual: { 2020: 1.7, 2021: 3.6, 2022: 6.2, 2023: 4.8, 2024: 3.4 },
     quarterly: {
-      "2023-Q1": 5.5, "2023-Q2": 5.0, "2023-Q3": 4.4, "2023-Q4": 3.9,
-      "2024-Q1": 3.7, "2024-Q2": 3.4, "2024-Q3": 3.2, "2024-Q4": 3.3,
-      "2025-Q1": 3.3, "2025-Q2": 3.2, "2025-Q3": 3.1, "2025-Q4": 3.0,
-      "2026-Q1": 3.0
+      "2023-Q1": 5.5, "2023-Q2": 5.2, "2023-Q3": 4.4, "2023-Q4": 4.0,
+      "2024-Q1": 3.8, "2024-Q2": 3.4, "2024-Q3": 3.3, "2024-Q4": 3.3,
+      "2025-Q1": 3.1, "2025-Q2": 2.8, "2025-Q3": 3.1,
+      "2026-Q1": 2.5, "2026-Q2": 2.7
     },
-    projected: { "2026-Q2": 2.9, "2026-Q3": 2.8, "2026-Q4": 2.7 },
-    latest: 2.6,
-    prevMonth: 2.5
+    projected: { "2026-Q3": 2.8, "2026-Q4": 2.7 },
+    latest: 2.4,
+    prevMonth: 2.5,
+    asOf: "2026-08-01",
+    releaseDate: "2026-09-11"
   },
 
-  // PPI Final Demand — YoY % change
   ppi: {
     label: "PPI Final Demand",
     unit: "%",
-    annual: {
-      2020: 0.8, 2021: 10.0, 2022: 6.4, 2023: 1.1, 2024: 2.3, 2025: 2.5
-    },
+    annual: { 2020: 0.2, 2021: 7.0, 2022: 9.5, 2023: 2.0, 2024: 2.4, 2025: 3.0 },
     quarterly: {
-      "2023-Q1": 3.4, "2023-Q2": 0.8, "2023-Q3": 0.5, "2023-Q4": 0.8,
-      "2024-Q1": 1.6, "2024-Q2": 2.4, "2024-Q3": 2.0, "2024-Q4": 3.0,
-      "2025-Q1": 3.2, "2025-Q2": 2.7, "2025-Q3": 2.2, "2025-Q4": 1.8,
-      "2026-Q1": 2.0
+      "2023-Q1": 4.4, "2023-Q2": 1.2, "2023-Q3": 1.6, "2023-Q4": 1.0,
+      "2024-Q1": 1.5, "2024-Q2": 2.6, "2024-Q3": 2.2, "2024-Q4": 3.1,
+      "2025-Q1": 3.4, "2025-Q2": 2.5, "2025-Q3": 3.0, "2025-Q4": 3.0,
+      "2026-Q1": 3.6, "2026-Q2": 5.7
     },
-    projected: { "2026-Q2": 2.1, "2026-Q3": 2.2, "2026-Q4": 2.0 },
-    latest: 4.0,
-    prevMonth: 2.4,
-    mom: 0.5,
-    releaseDate: "2026-03-13"
+    projected: { "2026-Q3": 2.2, "2026-Q4": 2.0 },
+    latest: 5.4,
+    prevMonth: 4.8,
+    mom: 0.4,
+    asOf: "2026-08-01",
+    releaseDate: "2026-09-10"
   },
 
-  // PPI Core
   ppiCore: {
     label: "PPI Core (ex F&E&T)",
     unit: "%",
-    annual: {
-      2020: 1.2, 2021: 6.9, 2022: 5.5, 2023: 2.5, 2024: 3.1, 2025: 3.3
-    },
+    annual: { 2020: 0.9, 2021: 5.6, 2022: 7.8, 2023: 2.9, 2024: 2.9, 2025: 3.3 },
     quarterly: {
-      "2023-Q1": 3.5, "2023-Q2": 2.7, "2023-Q3": 2.2, "2023-Q4": 2.1,
-      "2024-Q1": 2.5, "2024-Q2": 3.1, "2024-Q3": 3.2, "2024-Q4": 3.4,
-      "2025-Q1": 3.5, "2025-Q2": 3.4, "2025-Q3": 3.2, "2025-Q4": 3.0,
-      "2026-Q1": 3.1
+      "2023-Q1": 4.4, "2023-Q2": 2.8, "2023-Q3": 2.5, "2023-Q4": 2.0,
+      "2024-Q1": 2.1, "2024-Q2": 2.8, "2024-Q3": 2.9, "2024-Q4": 3.6,
+      "2025-Q1": 3.8, "2025-Q2": 3.0, "2025-Q3": 3.2, "2025-Q4": 3.2,
+      "2026-Q1": 3.8, "2026-Q2": 4.7
     },
-    projected: { "2026-Q2": 3.0, "2026-Q3": 2.9, "2026-Q4": 2.8 },
-    latest: 3.2,
-    prevMonth: 3.0
+    projected: { "2026-Q3": 2.9, "2026-Q4": 2.8 },
+    latest: 4.6,
+    prevMonth: 4.3,
+    asOf: "2026-08-01",
+    releaseDate: "2026-09-10"
   },
 
-  // Nonfarm Payrolls (thousands)
   nfp: {
     label: "Nonfarm Payrolls",
     unit: "K",
-    annual: {
-      2020: -9370, 2021: 6740, 2022: 4500, 2023: 3020, 2024: 2160, 2025: 1740
-    },
+    annual: { 2020: -9246, 2021: 7268, 2022: 4526, 2023: 2515, 2024: 1459, 2025: 116 },
     quarterly: {
-      "2023-Q1": 803, "2023-Q2": 600, "2023-Q3": 651, "2023-Q4": 564,
-      "2024-Q1": 604, "2024-Q2": 503, "2024-Q3": 477, "2024-Q4": 510,
-      "2025-Q1": 480, "2025-Q2": 450, "2025-Q3": 430, "2025-Q4": 400,
-      "2026-Q1": 390
+      "2023-Q1": 792, "2023-Q2": 746, "2023-Q3": 537, "2023-Q4": 440,
+      "2024-Q1": 609, "2024-Q2": 229, "2024-Q3": 217, "2024-Q4": 404,
+      "2025-Q1": 61, "2025-Q2": 101, "2025-Q3": 70, "2025-Q4": -116,
+      "2026-Q1": 218, "2026-Q2": 242
     },
-    projected: { "2026-Q2": 370, "2026-Q3": 350, "2026-Q4": 340 },
-    latestMonth: 178,
-    prevMonth: -133,
-    avg3mo: 68,
-    avg6mo: 162,
-    releaseDate: "2026-03-06"
+    projected: { "2026-Q3": 350, "2026-Q4": 340 },
+    latestMonth: 162,
+    prevMonth: 21,
+    avg3mo: 71.3,
+    avg6mo: 106.5,
+    asOf: "2026-08-01",
+    releaseDate: "2026-09-04"
   },
 
-  // Unemployment Rate
   unrate: {
     label: "Unemployment Rate",
     unit: "%",
-    annual: {
-      2020: 8.1, 2021: 5.4, 2022: 3.6, 2023: 3.6, 2024: 4.0, 2025: 4.1
-    },
+    annual: { 2020: 8.1, 2021: 5.4, 2022: 3.7, 2023: 3.6, 2024: 4.0 },
     quarterly: {
-      "2023-Q1": 3.5, "2023-Q2": 3.5, "2023-Q3": 3.8, "2023-Q4": 3.7,
+      "2023-Q1": 3.5, "2023-Q2": 3.5, "2023-Q3": 3.6, "2023-Q4": 3.8,
       "2024-Q1": 3.8, "2024-Q2": 4.0, "2024-Q3": 4.2, "2024-Q4": 4.1,
-      "2025-Q1": 4.0, "2025-Q2": 4.1, "2025-Q3": 4.2, "2025-Q4": 4.1,
-      "2026-Q1": 4.1
+      "2025-Q1": 4.1, "2025-Q2": 4.2, "2025-Q3": 4.3,
+      "2026-Q1": 4.3, "2026-Q2": 4.3
     },
-    projected: { "2026-Q2": 4.2, "2026-Q3": 4.2, "2026-Q4": 4.3 },
-    latest: 4.3,
+    projected: { "2026-Q3": 4.2, "2026-Q4": 4.3 },
+    latest: 4.1,
     prevMonth: 4.1,
-    u6: 8.1,
-    lfpr: 62.4
+    u6: 7.7,
+    lfpr: 61.6,
+    asOf: "2026-08-01",
+    releaseDate: "2026-09-04"
   },
 
-  // Avg Hourly Earnings YoY
   ahe: {
     label: "Avg Hourly Earnings YoY",
     unit: "%",
-    annual: {
-      2020: 7.7, 2021: 4.7, 2022: 5.1, 2023: 4.3, 2024: 4.0, 2025: 3.8
-    },
+    annual: { 2020: 4.9, 2021: 4.3, 2022: 5.4, 2023: 4.5, 2024: 4.0, 2025: 4.0 },
     quarterly: {
-      "2023-Q1": 4.5, "2023-Q2": 4.4, "2023-Q3": 4.2, "2023-Q4": 4.1,
-      "2024-Q1": 4.3, "2024-Q2": 3.9, "2024-Q3": 3.8, "2024-Q4": 3.9,
-      "2025-Q1": 3.9, "2025-Q2": 3.8, "2025-Q3": 3.7, "2025-Q4": 3.7,
-      "2026-Q1": 3.6
+      "2023-Q1": 4.6, "2023-Q2": 4.5, "2023-Q3": 4.5, "2023-Q4": 4.1,
+      "2024-Q1": 4.2, "2024-Q2": 4.0, "2024-Q3": 3.8, "2024-Q4": 4.1,
+      "2025-Q1": 4.1, "2025-Q2": 3.9, "2025-Q3": 3.9, "2025-Q4": 3.9,
+      "2026-Q1": 3.6, "2026-Q2": 3.4
     },
-    projected: { "2026-Q2": 3.5, "2026-Q3": 3.5, "2026-Q4": 3.4 },
-    latest: 3.8
+    projected: { "2026-Q3": 3.5, "2026-Q4": 3.4 },
+    latest: 3.1,
+    prevMonth: 3.2,
+    asOf: "2026-08-01",
+    releaseDate: "2026-09-04"
   },
 
-  // JOLTS Job Openings (millions)
   jolts: {
     label: "JOLTS Openings",
     unit: "M",
     quarterly: {
-      "2023-Q1": 10.1, "2023-Q2": 9.6, "2023-Q3": 9.2, "2023-Q4": 8.8,
-      "2024-Q1": 8.5, "2024-Q2": 8.0, "2024-Q3": 7.7, "2024-Q4": 7.6,
-      "2025-Q1": 7.5, "2025-Q2": 7.4, "2025-Q3": 7.4, "2025-Q4": 7.3,
-      "2026-Q1": 7.2
+      "2023-Q1": 9.9, "2023-Q2": 9.5, "2023-Q3": 9.1, "2023-Q4": 8.6,
+      "2024-Q1": 8.3, "2024-Q2": 7.6, "2024-Q3": 7.3, "2024-Q4": 7.4,
+      "2025-Q1": 7.2, "2025-Q2": 7.2, "2025-Q3": 7.1, "2025-Q4": 6.9,
+      "2026-Q1": 7.0, "2026-Q2": 7.4
     },
-    projected: { "2026-Q2": 7.1, "2026-Q3": 7.0, "2026-Q4": 6.9 },
-    latest: 7.6
+    projected: { "2026-Q3": 7.0, "2026-Q4": 6.9 },
+    latest: 7.3,
+    asOf: "2026-07-01",
+    releaseDate: "2026-09-01"
   },
 
-  // CPI Components for breakdown — March 2026 BLS data (released Apr 10, 2026)
+  // Real GDP, percent change at a seasonally adjusted annual rate.
+  // Static values are BEA's estimates as carried on FRED (A191RL1Q225SBEA).
+  // A BEA key replaces this object from the BEA API and sets live: true.
+  gdp: {
+    label: "Real GDP",
+    unit: "%",
+    seriesId: "A191RL1Q225SBEA",
+    quarterly: {
+      "2024-Q1": 0.8, "2024-Q2": 3.6, "2024-Q3": 3.3, "2024-Q4": 1.9,
+      "2025-Q1": -0.6, "2025-Q2": 3.8, "2025-Q3": 4.4, "2025-Q4": 0.5,
+      "2026-Q1": 2.1, "2026-Q2": 1.5
+    },
+    latest: 1.5,
+    asOf: "2026-Q2",
+    live: false
+  },
+
+  // Monthly shelter and owners' equivalent rent, YoY percent. null = not published.
+  shelterMonthly: {
+    labels: ["Aug-25","Sep-25","Oct-25","Nov-25","Dec-25","Jan-26","Feb-26","Mar-26","Apr-26","May-26","Jun-26","Jul-26","Aug-26"],
+    shelter: [3.6, 3.6, null, 3.0, 3.2, 3.0, 3.0, 3.0, 3.3, 3.4, 3.3, 3.2, 3.0],
+    oer: [4.0, 3.8, null, 3.4, 3.4, 3.3, 3.2, 3.1, 3.3, 3.3, 3.3, 3.2, 3.1],
+    asOf: "2026-08-01"
+  },
+
+  // CPI components. asOf 2026-08 rows were computed from FRED indexes.
+  // asOf 2026-03 rows could not be refreshed and are the prior snapshot.
+  // Weights were not re-fetched.
   cpiComponents: {
-    "Food": { weight: 13.5, yoy: 2.7, mom: 0.0, prev: 2.9, trend: "down" },
-    "Energy": { weight: 6.9, yoy: 12.5, mom: 10.9, prev: 0.2, trend: "up" },
-    "Shelter": { weight: 36.5, yoy: 3.0, mom: 0.3, prev: 3.3, trend: "down" },
-    "Medical": { weight: 8.4, yoy: 3.1, mom: -0.2, prev: 3.0, trend: "up" },
-    "Transportation": { weight: 8.7, yoy: 4.1, mom: 0.8, prev: 3.2, trend: "up" },
-    "Apparel": { weight: 2.5, yoy: 1.8, mom: 1.0, prev: 0.9, trend: "up" },
-    "Education": { weight: 5.8, yoy: 3.2, mom: 0.2, prev: 3.3, trend: "down" },
-    "Recreation": { weight: 5.5, yoy: 1.7, mom: 0.5, prev: 1.5, trend: "up" },
-    "Other Goods": { weight: 12.2, yoy: 1.5, mom: 0.1, prev: 1.7, trend: "down" }
+    "Food": { weight: 13.5, yoy: 2.6, mom: 0.1, prev: 2.9, trend: "down", asOf: "2026-08" },
+    "Energy": { weight: 6.9, yoy: 16.0, mom: 2.1, prev: 14.4, trend: "up", asOf: "2026-08" },
+    "Shelter": { weight: 36.5, yoy: 3.0, mom: 0.3, prev: 3.2, trend: "down", asOf: "2026-08" },
+    "Medical": { weight: 8.4, yoy: 1.6, mom: -0.2, prev: 1.7, trend: "down", asOf: "2026-08" },
+    "Transportation": { weight: 8.7, yoy: 6.0, mom: 1.2, prev: 5.6, trend: "up", asOf: "2026-08" },
+    "Apparel": { weight: 2.5, yoy: 3.6, mom: 0.0, prev: 3.9, trend: "down", asOf: "2026-08" },
+    "Education": { weight: 5.8, yoy: 3.2, mom: 0.2, prev: 3.3, trend: "down", asOf: "2026-03" },
+    "Recreation": { weight: 5.5, yoy: 1.7, mom: 0.5, prev: 1.5, trend: "up", asOf: "2026-03" },
+    "Other Goods": { weight: 12.2, yoy: 1.5, mom: 0.1, prev: 1.7, trend: "down", asOf: "2026-03" }
   },
 
-  // PPI Components — March 2026 BLS data (released Apr 14, 2026)
+  // PPI components. Food, energy, and goods ex food & energy are August 2026.
+  // The other rows are the March 2026 snapshot. Weights were not re-fetched.
   ppiComponents: {
-    "Final Demand Goods": { yoy: 3.8, mom: 1.6, prev: 1.4, weight: 33 },
-    "  Food": { yoy: 4.5, mom: 0.6, prev: 4.0, weight: 8 },
-    "  Energy": { yoy: 14.2, mom: 8.8, prev: 2.1, weight: 9 },
-    "  ex F&E": { yoy: 2.1, mom: 0.2, prev: 2.0, weight: 16 },
-    "Final Demand Services": { yoy: 3.5, mom: 0.0, prev: 3.4, weight: 67 },
-    "  Trade": { yoy: 3.2, mom: -0.1, prev: 3.4, weight: 22 },
-    "  Transportation": { yoy: 4.8, mom: 0.6, prev: 3.9, weight: 11 },
-    "  Other": { yoy: 3.4, mom: 0.1, prev: 3.3, weight: 34 }
+    "Final Demand Goods": { yoy: 3.8, mom: 1.6, prev: 1.4, weight: 33, asOf: "2026-03" },
+    "  Food": { yoy: -0.4, mom: 0.0, prev: -0.8, weight: 8, asOf: "2026-08" },
+    "  Energy": { yoy: 20.6, mom: 2.8, prev: 17.2, weight: 9, asOf: "2026-08" },
+    "  ex F&E": { yoy: 5.0, mom: 0.4, prev: 5.0, weight: 16, asOf: "2026-08" },
+    "Final Demand Services": { yoy: 3.5, mom: 0.0, prev: 3.4, weight: 67, asOf: "2026-03" },
+    "  Trade": { yoy: 3.2, mom: -0.1, prev: 3.4, weight: 22, asOf: "2026-03" },
+    "  Transportation": { yoy: 4.8, mom: 0.6, prev: 3.9, weight: 11, asOf: "2026-03" },
+    "  Other": { yoy: 3.4, mom: 0.1, prev: 3.3, weight: 34, asOf: "2026-03" }
   },
 
-  // Employment by Sector (MoM change, thousands) — March 2026 BLS (released Apr 3, 2026)
+  // Employment by sector was not re-fetched. March 2026 snapshot.
   empSectors: {
     "Health Care": { mom: 52, avg3: 48, avg6: 50, trend: "up" },
     "Construction": { mom: 30, avg3: 22, avg6: 18, trend: "up" },
@@ -991,27 +1061,33 @@ const DATA = {
     "Federal Government": { mom: -18, avg3: -15, avg6: -10, trend: "down" }
   },
 
-  // BLS Release Calendar
-  // BLS Release Calendar — verified from bls.gov/schedule and bls.gov/news.release
-  // Status is computed dynamically based on today's date (no hardcoding)
+  // Dates from the BLS Schedule of Selected Releases for 2026, fetched 2026-09-27.
   releases: [
-    { date: "2026-03-06", name: "Employment Situation - February" },
-    { date: "2026-03-12", name: "CPI - February 2026" },
-    { date: "2026-03-13", name: "PPI - February 2026" },
-    { date: "2026-03-14", name: "Import/Export Prices - February" },
-    { date: "2026-04-03", name: "Employment Situation - March" },
-    { date: "2026-04-10", name: "CPI - March 2026" },
-    { date: "2026-04-14", name: "PPI - March 2026" },
-    { date: "2026-04-16", name: "Import/Export Prices - March" },
-    { date: "2026-05-05", name: "JOLTS - March 2026" },
-    { date: "2026-05-08", name: "Employment Situation - April" },
-    { date: "2026-05-12", name: "CPI - April 2026" },
-    { date: "2026-05-13", name: "PPI - April 2026" },
-    { date: "2026-06-02", name: "JOLTS - April 2026" },
-    { date: "2026-06-05", name: "Employment Situation - May" },
-    { date: "2026-06-10", name: "CPI - May 2026" },
-    { date: "2026-06-11", name: "PPI - May 2026" },
-    { date: "2026-07-02", name: "Employment Situation - June" },
+    { date: "2026-08-04", name: "JOLTS - June 2026" },
+    { date: "2026-08-07", name: "Employment Situation - July" },
+    { date: "2026-08-12", name: "CPI - July 2026" },
+    { date: "2026-08-13", name: "PPI - July 2026" },
+    { date: "2026-08-18", name: "Import/Export Prices - July" },
+    { date: "2026-09-01", name: "JOLTS - July 2026" },
+    { date: "2026-09-04", name: "Employment Situation - August" },
+    { date: "2026-09-10", name: "PPI - August 2026" },
+    { date: "2026-09-11", name: "CPI - August 2026" },
+    { date: "2026-09-16", name: "Import/Export Prices - August" },
+    { date: "2026-09-29", name: "JOLTS - August 2026" },
+    { date: "2026-10-02", name: "Employment Situation - September" },
+    { date: "2026-10-14", name: "CPI - September 2026" },
+    { date: "2026-10-15", name: "PPI - September 2026" },
+    { date: "2026-10-16", name: "Import/Export Prices - September" },
+    { date: "2026-11-03", name: "JOLTS - September 2026" },
+    { date: "2026-11-06", name: "Employment Situation - October" },
+    { date: "2026-11-10", name: "CPI - October 2026" },
+    { date: "2026-11-13", name: "PPI - October 2026" },
+    { date: "2026-11-17", name: "Import/Export Prices - October" },
+    { date: "2026-12-01", name: "JOLTS - October 2026" },
+    { date: "2026-12-04", name: "Employment Situation - November" },
+    { date: "2026-12-10", name: "CPI - November 2026" },
+    { date: "2026-12-15", name: "PPI - November 2026" },
+    { date: "2026-12-17", name: "Import/Export Prices - November" }
   ]
 };
 
@@ -1033,6 +1109,62 @@ function fmtChange(v, prefix = true) {
 function fmtPct(v) {
   if (v === null || v === undefined) return '--';
   return v.toFixed(1) + '%';
+}
+
+function round1(v) { return Math.round(v * 10) / 10; }
+
+function pctAxisTick(v) {
+  const n = round1(Number(v));
+  if (!isFinite(n)) return '';
+  return n.toFixed(1) + '%';
+}
+
+function parseFredDateParts(date) {
+  // FRED dates are calendar dates (YYYY-MM-DD). Date.parse treats those as UTC,
+  // and getMonth()/getFullYear() then shift them a day back west of UTC.
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(date || ''));
+  if (!m) return null;
+  return { year: +m[1], month: +m[2], day: +m[3] };
+}
+
+function localISODate(d = new Date()) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function monthLabel(iso) {
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const p = parseFredDateParts(iso);
+  return p ? `${months[p.month - 1]} ${p.year}` : '';
+}
+
+function changeClassFor(label, change) {
+  if (!change) return '';
+  const upIsGood = /NFP|JOLTS|Earnings/i.test(label);
+  if (change > 0) return upIsGood ? 'val-pos' : 'val-neg';
+  if (change < 0) return upIsGood ? 'val-neg' : 'val-pos';
+  return '';
+}
+
+function liveBadge() {
+  return isLiveData
+    ? '<span class="panel-badge badge-live">Live</span>'
+    : '<span class="panel-badge badge-quarterly">Snapshot</span>';
+}
+
+function paddedRange(values, minSpan) {
+  const nums = values.filter(v => v != null && isFinite(v));
+  if (!nums.length) return {};
+  let lo = Math.min(...nums), hi = Math.max(...nums);
+  if (hi - lo < minSpan) {
+    const mid = (hi + lo) / 2;
+    lo = mid - minSpan / 2;
+    hi = mid + minSpan / 2;
+  } else {
+    const pad = (hi - lo) * 0.15;
+    lo -= pad;
+    hi += pad;
+  }
+  return { min: round1(lo), max: round1(hi) };
 }
 
 function getHeatColor(val, min, max) {
@@ -1072,7 +1204,7 @@ function buildTicker() {
     { label: "PPI YoY", value: fmtPct(DATA.ppi.latest), change: fmtChange(DATA.ppi.latest - DATA.ppi.prevMonth), up: DATA.ppi.latest < DATA.ppi.prevMonth },
     { label: "PPI MoM", value: fmtPct(DATA.ppi.mom), change: "", up: true },
     { label: "CORE PPI", value: fmtPct(DATA.ppiCore.latest), change: fmtChange(DATA.ppiCore.latest - DATA.ppiCore.prevMonth), up: false },
-    { label: "NFP", value: DATA.nfp.latestMonth + "K", change: fmtChange(DATA.nfp.latestMonth - DATA.nfp.prevMonth) + "K", up: DATA.nfp.latestMonth > DATA.nfp.prevMonth },
+    { label: "NFP", value: (DATA.nfp.latestMonth > 0 ? '+' : '') + DATA.nfp.latestMonth + "K", change: fmtChange(DATA.nfp.latestMonth - DATA.nfp.prevMonth) + "K", up: DATA.nfp.latestMonth > DATA.nfp.prevMonth },
     { label: "UNEMP", value: fmtPct(DATA.unrate.latest), change: fmtChange(DATA.unrate.latest - DATA.unrate.prevMonth), up: DATA.unrate.latest < DATA.unrate.prevMonth },
     { label: "U-6", value: fmtPct(DATA.unrate.u6), change: "", up: true },
     { label: "LFPR", value: fmtPct(DATA.unrate.lfpr), change: "", up: true },
@@ -1099,25 +1231,24 @@ buildTicker();
 // SUMMARY CARDS
 // ═══════════════════════════════════════════
 function buildSummaryCards() {
+  const nfpChange = DATA.nfp.latestMonth - DATA.nfp.prevMonth;
   const cards = [
-    { label: "CPI All Items", value: fmtPct(DATA.cpi.latest), change: DATA.cpi.latest - DATA.cpi.prevMonth, period: "YoY — Mar 2026", color: DATA.cpi.latest > DATA.cpi.target ? 'var(--accent-red)' : 'var(--accent-green)' },
-    { label: "Core CPI", value: fmtPct(DATA.cpiCore.latest), change: DATA.cpiCore.latest - DATA.cpiCore.prevMonth, period: "YoY — Mar 2026", color: 'var(--accent-orange)' },
-    { label: "PPI Final Demand", value: fmtPct(DATA.ppi.latest), change: DATA.ppi.latest - DATA.ppi.prevMonth, period: "YoY — Mar 2026", color: 'var(--accent-yellow)' },
-    { label: "NFP (Monthly)", value: "+" + DATA.nfp.latestMonth + "K", change: DATA.nfp.latestMonth - DATA.nfp.prevMonth, period: "Mar 2026", color: 'var(--accent-blue)' },
-    { label: "Unemployment", value: fmtPct(DATA.unrate.latest), change: DATA.unrate.latest - DATA.unrate.prevMonth, period: "Mar 2026", color: 'var(--accent-cyan)' },
-    { label: "Avg Hourly Earnings", value: fmtPct(DATA.ahe.latest), change: 0, period: "YoY — Mar 2026", color: 'var(--accent-purple)' },
+    { label: "CPI All Items", value: fmtPct(DATA.cpi.latest), change: DATA.cpi.latest - DATA.cpi.prevMonth, unit: "pp", period: "YoY — " + monthLabel(DATA.cpi.asOf), color: DATA.cpi.latest > DATA.cpi.target ? 'var(--accent-red)' : 'var(--accent-green)' },
+    { label: "Core CPI", value: fmtPct(DATA.cpiCore.latest), change: DATA.cpiCore.latest - DATA.cpiCore.prevMonth, unit: "pp", period: "YoY — " + monthLabel(DATA.cpiCore.asOf), color: 'var(--accent-orange)' },
+    { label: "PPI Final Demand", value: fmtPct(DATA.ppi.latest), change: DATA.ppi.latest - DATA.ppi.prevMonth, unit: "pp", period: "YoY — " + monthLabel(DATA.ppi.asOf), color: 'var(--accent-yellow)' },
+    { label: "NFP (Monthly)", value: (DATA.nfp.latestMonth > 0 ? '+' : '') + DATA.nfp.latestMonth + "K", change: nfpChange, unit: "K", period: monthLabel(DATA.nfp.asOf), color: 'var(--accent-blue)' },
+    { label: "Unemployment", value: fmtPct(DATA.unrate.latest), change: DATA.unrate.latest - DATA.unrate.prevMonth, unit: "pp", period: monthLabel(DATA.unrate.asOf), color: 'var(--accent-cyan)' },
+    { label: "Avg Hourly Earnings", value: fmtPct(DATA.ahe.latest), change: DATA.ahe.latest - DATA.ahe.prevMonth, unit: "pp", period: "YoY — " + monthLabel(DATA.ahe.asOf), color: 'var(--accent-purple)' },
   ];
 
   let html = '';
   cards.forEach((c, i) => {
     const dir = c.change > 0 ? '▲' : c.change < 0 ? '▼' : '—';
-    const changeClass = c.label.includes('Unemployment') ?
-      (c.change > 0 ? 'val-neg' : c.change < 0 ? 'val-pos' : '') :
-      (c.change > 0 ? 'val-neg' : c.change < 0 ? 'val-pos' : '');
+    const changeClass = changeClassFor(c.label, c.change);
     html += `<div class="summary-card fade-in" style="animation-delay: ${i * 0.06}s">
       <div class="label">${c.label}</div>
       <div class="value" style="color: ${c.color}">${c.value}</div>
-      <div class="change ${changeClass}">${dir} ${fmtChange(c.change)}pp</div>
+      <div class="change ${changeClass}">${dir} ${fmtChange(c.change)}${c.unit}</div>
       <div class="period">${c.period}</div>
     </div>`;
   });
@@ -1128,10 +1259,12 @@ buildSummaryCards();
 // ═══════════════════════════════════════════
 // CHART DEFAULTS
 // ═══════════════════════════════════════════
-Chart.defaults.color = '#7a8899';
-Chart.defaults.borderColor = '#1e2a36';
-Chart.defaults.font.family = "'JetBrains Mono', monospace";
-Chart.defaults.font.size = 10;
+if (typeof Chart !== 'undefined') {
+  Chart.defaults.color = '#7a8899';
+  Chart.defaults.borderColor = '#1e2a36';
+  Chart.defaults.font.family = "'JetBrains Mono', monospace";
+  Chart.defaults.font.size = 10;
+}
 
 const chartInstances = {};
 
@@ -1140,6 +1273,17 @@ function destroyChart(id) {
     chartInstances[id].destroy();
     delete chartInstances[id];
   }
+}
+
+function createChart(target, config) {
+  if (typeof Chart === 'undefined') {
+    const el = typeof target === 'string' ? document.getElementById(target) : target;
+    if (el && el.parentElement && !el.parentElement.querySelector('.chart-missing')) {
+      el.parentElement.insertAdjacentHTML('beforeend', '<div class="chart-missing panel-subtitle">Chart library did not load. Tables on this page still use the embedded data.</div>');
+    }
+    return null;
+  }
+  return new Chart(target, config);
 }
 
 // ═══════════════════════════════════════════
@@ -1174,21 +1318,21 @@ function renderOverview(container) {
   container.innerHTML = `
     <div class="panel">
       <div class="panel-header">
-        <div><div class="panel-title">CPI & PPI Trend</div><div class="panel-subtitle">Quarterly YoY % Change</div></div>
-        <span class="panel-badge badge-live">Live</span>
+        <div><div class="panel-title">CPI & PPI Trend</div><div class="panel-subtitle">Quarterly YoY of the 3-month average index. 2025-Q4 is blank for CPI: October 2025 was not published.</div></div>
+        ${liveBadge()}
       </div>
       <div class="chart-container"><canvas id="chartCpiPpi"></canvas></div>
     </div>
     <div class="panel">
       <div class="panel-header">
-        <div><div class="panel-title">Employment Overview</div><div class="panel-subtitle">NFP Monthly &amp; Unemployment Rate</div></div>
-        <span class="panel-badge badge-live">Live</span>
+        <div><div class="panel-title">Employment Overview</div><div class="panel-subtitle">Quarterly payroll change (sum of monthly changes) and the unemployment rate</div></div>
+        ${liveBadge()}
       </div>
       <div class="chart-container"><canvas id="chartEmp"></canvas></div>
     </div>
     <div class="panel">
       <div class="panel-header">
-        <div><div class="panel-title">Quarterly Data Matrix</div><div class="panel-subtitle">All Indicators — YoY % / Level</div></div>
+        <div><div class="panel-title">Quarterly Data Matrix</div><div class="panel-subtitle">Actual quarters only. A blank cell means that quarter was not published or is not complete.</div></div>
         <span class="panel-badge badge-quarterly">Quarterly</span>
       </div>
       <div class="matrix-scroll">${buildQuarterlyTable()}</div>
@@ -1202,15 +1346,22 @@ function renderOverview(container) {
     </div>
     <div class="panel">
       <div class="panel-header">
-        <div><div class="panel-title">Inflation Heat Map</div><div class="panel-subtitle">CPI &amp; PPI Components — YoY Intensity</div></div>
+        <div><div class="panel-title">Inflation Heat Map</div><div class="panel-subtitle">CPI components. August 2026 except Education, Recreation, and Other Goods (March 2026). Weights were not re-fetched.</div></div>
       </div>
-      ${buildInflationHeatMap()}
+      <div class="matrix-scroll">${buildInflationHeatMap()}</div>
     </div>
     <div class="panel">
       <div class="panel-header">
         <div><div class="panel-title">Release Calendar</div><div class="panel-subtitle">Upcoming BLS Data Releases</div></div>
       </div>
-      ${buildReleaseCalendar()}
+      <div class="matrix-scroll">${buildReleaseCalendar()}</div>
+    </div>
+    <div class="panel panel-full">
+      <div class="panel-header">
+        <div><div class="panel-title">Real GDP</div><div class="panel-subtitle">${DATA.gdp.live ? 'Loaded from the BEA API (NIPA T10101, line 1).' : 'BEA estimate via FRED ' + DATA.gdp.seriesId + '. Quarterly percent change, seasonally adjusted annual rate. Latest ' + DATA.gdp.asOf + '.'}</div></div>
+        ${DATA.gdp.live ? '<span class="panel-badge badge-live">Live</span>' : '<span class="panel-badge badge-quarterly">Snapshot</span>'}
+      </div>
+      <div class="matrix-scroll">${buildGdpTable()}</div>
     </div>
   `;
 
@@ -1218,36 +1369,30 @@ function renderOverview(container) {
   renderEmpChart();
 }
 
+function allQuarterKeys() {
+  const set = new Set();
+  ['cpi','cpiCore','ppi','ppiCore','nfp','unrate','ahe','jolts'].forEach(k => {
+    Object.keys(DATA[k]?.quarterly || {}).forEach(q => set.add(q));
+  });
+  return [...set].sort();
+}
+
+function seriesOnAxis(map, keys) {
+  return keys.map(k => (map && map[k] != null && isFinite(map[k])) ? map[k] : null);
+}
+
 function renderCpiPpiChart() {
-  const labels = Object.keys(DATA.cpi.quarterly);
-  const projLabels = Object.keys(DATA.cpi.projected);
-  const allLabels = [...labels, ...projLabels];
-
-  const cpiData = labels.map(k => DATA.cpi.quarterly[k]);
-  const cpiProj = [...new Array(labels.length).fill(null), ...projLabels.map(k => DATA.cpi.projected[k])];
-  cpiProj[labels.length - 1] = cpiData[cpiData.length - 1]; // bridge
-
-  const coreData = labels.map(k => DATA.cpiCore.quarterly[k]);
-  const coreProj = [...new Array(labels.length).fill(null), ...projLabels.map(k => DATA.cpiCore.projected[k])];
-  coreProj[labels.length - 1] = coreData[coreData.length - 1];
-
-  const ppiData = labels.map(k => DATA.ppi.quarterly[k]);
-  const ppiProj = [...new Array(labels.length).fill(null), ...projLabels.map(k => DATA.ppi.projected[k])];
-  ppiProj[labels.length - 1] = ppiData[ppiData.length - 1];
-
+  const labels = allQuarterKeys();
   const ctx = document.getElementById('chartCpiPpi');
-  chartInstances['chartCpiPpi'] = new Chart(ctx, {
+  chartInstances['chartCpiPpi'] = createChart(ctx, {
     type: 'line',
     data: {
-      labels: allLabels,
+      labels,
       datasets: [
-        { label: 'CPI All Items', data: [...cpiData, ...new Array(projLabels.length).fill(null)], borderColor: '#ff9500', backgroundColor: 'rgba(255,149,0,0.08)', fill: true, tension: 0.3, pointRadius: 3, pointBackgroundColor: '#ff9500', borderWidth: 2 },
-        { label: 'CPI All (Proj)', data: cpiProj, borderColor: '#ff9500', borderDash: [5, 5], pointRadius: 3, pointBackgroundColor: '#ff9500', borderWidth: 1.5, pointStyle: 'triangle' },
-        { label: 'Core CPI', data: [...coreData, ...new Array(projLabels.length).fill(null)], borderColor: '#0084ff', backgroundColor: 'rgba(0,132,255,0.06)', fill: true, tension: 0.3, pointRadius: 2, borderWidth: 2 },
-        { label: 'Core CPI (Proj)', data: coreProj, borderColor: '#0084ff', borderDash: [5, 5], pointRadius: 2, borderWidth: 1.5, pointStyle: 'triangle' },
-        { label: 'PPI', data: [...ppiData, ...new Array(projLabels.length).fill(null)], borderColor: '#ffd600', tension: 0.3, pointRadius: 2, borderWidth: 2 },
-        { label: 'PPI (Proj)', data: ppiProj, borderColor: '#ffd600', borderDash: [5, 5], pointRadius: 2, borderWidth: 1.5, pointStyle: 'triangle' },
-        { label: 'Fed Target', data: new Array(allLabels.length).fill(2.0), borderColor: 'rgba(255,59,48,0.5)', borderDash: [8, 4], pointRadius: 0, borderWidth: 1 }
+        { label: 'CPI All Items', data: seriesOnAxis(DATA.cpi.quarterly, labels), borderColor: '#ff9500', backgroundColor: 'rgba(255,149,0,0.08)', fill: true, tension: 0.3, pointRadius: 3, pointBackgroundColor: '#ff9500', borderWidth: 2, spanGaps: false },
+        { label: 'Core CPI', data: seriesOnAxis(DATA.cpiCore.quarterly, labels), borderColor: '#0084ff', backgroundColor: 'rgba(0,132,255,0.06)', fill: true, tension: 0.3, pointRadius: 2, borderWidth: 2, spanGaps: false },
+        { label: 'PPI', data: seriesOnAxis(DATA.ppi.quarterly, labels), borderColor: '#ffd600', tension: 0.3, pointRadius: 2, borderWidth: 2, spanGaps: false },
+        { label: 'Fed Target', data: new Array(labels.length).fill(2.0), borderColor: 'rgba(255,59,48,0.5)', borderDash: [8, 4], pointRadius: 0, borderWidth: 1 }
       ]
     },
     options: {
@@ -1258,35 +1403,24 @@ function renderCpiPpiChart() {
       },
       scales: {
         x: { grid: { color: 'rgba(30,42,54,0.5)' }, ticks: { maxRotation: 45, font: { size: 9 } } },
-        y: { grid: { color: 'rgba(30,42,54,0.5)' }, ticks: { callback: v => v + '%' } }
+        y: { grid: { color: 'rgba(30,42,54,0.5)' }, ticks: { callback: pctAxisTick } }
       }
     }
   });
 }
 
 function renderEmpChart() {
-  const labels = Object.keys(DATA.nfp.quarterly);
-  const projLabels = Object.keys(DATA.nfp.projected);
-  const allLabels = [...labels, ...projLabels];
-
-  const nfpData = labels.map(k => DATA.nfp.quarterly[k]);
-  const nfpProj = [...new Array(labels.length).fill(null), ...projLabels.map(k => DATA.nfp.projected[k])];
-  nfpProj[labels.length - 1] = nfpData[nfpData.length - 1];
-
-  const urData = labels.map(k => DATA.unrate.quarterly[k]);
-  const urProj = [...new Array(labels.length).fill(null), ...projLabels.map(k => DATA.unrate.projected[k])];
-  urProj[labels.length - 1] = urData[urData.length - 1];
-
+  const labels = allQuarterKeys();
+  const urData = seriesOnAxis(DATA.unrate.quarterly, labels);
+  const urScale = paddedRange(urData, 1.5);
   const ctx = document.getElementById('chartEmp');
-  chartInstances['chartEmp'] = new Chart(ctx, {
+  chartInstances['chartEmp'] = createChart(ctx, {
     type: 'bar',
     data: {
-      labels: allLabels,
+      labels,
       datasets: [
-        { type: 'bar', label: 'NFP (K)', data: [...nfpData, ...new Array(projLabels.length).fill(null)], backgroundColor: 'rgba(0,132,255,0.5)', borderColor: '#0084ff', borderWidth: 1, yAxisID: 'y', barPercentage: 0.7 },
-        { type: 'bar', label: 'NFP Proj (K)', data: nfpProj, backgroundColor: 'rgba(187,134,252,0.35)', borderColor: '#bb86fc', borderWidth: 1, borderDash: [3,3], yAxisID: 'y', barPercentage: 0.7 },
-        { type: 'line', label: 'Unemp Rate', data: [...urData, ...new Array(projLabels.length).fill(null)], borderColor: '#ff3b30', backgroundColor: 'rgba(255,59,48,0.08)', fill: true, tension: 0.3, pointRadius: 3, borderWidth: 2, yAxisID: 'y1' },
-        { type: 'line', label: 'Unemp (Proj)', data: urProj, borderColor: '#ff3b30', borderDash: [5,5], pointRadius: 3, borderWidth: 1.5, pointStyle: 'triangle', yAxisID: 'y1' }
+        { type: 'bar', label: 'NFP (K)', data: seriesOnAxis(DATA.nfp.quarterly, labels), backgroundColor: 'rgba(0,132,255,0.5)', borderColor: '#0084ff', borderWidth: 1, yAxisID: 'y', barPercentage: 0.7 },
+        { type: 'line', label: 'Unemp Rate', data: urData, borderColor: '#ff3b30', backgroundColor: 'rgba(255,59,48,0.08)', fill: true, tension: 0.3, pointRadius: 3, borderWidth: 2, yAxisID: 'y1', spanGaps: false }
       ]
     },
     options: {
@@ -1298,7 +1432,7 @@ function renderEmpChart() {
       scales: {
         x: { grid: { color: 'rgba(30,42,54,0.5)' }, ticks: { maxRotation: 45, font: { size: 9 } } },
         y: { position: 'left', grid: { color: 'rgba(30,42,54,0.5)' }, title: { display: true, text: 'NFP (thousands)', font: { size: 9 } } },
-        y1: { position: 'right', grid: { display: false }, title: { display: true, text: 'Unemp %', font: { size: 9 } }, ticks: { callback: v => v + '%' } }
+        y1: { position: 'right', grid: { display: false }, title: { display: true, text: 'Unemp %', font: { size: 9 } }, min: urScale.min, max: urScale.max, ticks: { callback: pctAxisTick } }
       }
     }
   });
@@ -1308,9 +1442,7 @@ function renderEmpChart() {
 // DATA TABLES
 // ═══════════════════════════════════════════
 function buildQuarterlyTable() {
-  const quarters = ["2024-Q1","2024-Q2","2024-Q3","2024-Q4","2025-Q1","2025-Q2","2025-Q3","2025-Q4","2026-Q1"];
-  const projQ = ["2026-Q2","2026-Q3","2026-Q4"];
-  const allQ = [...quarters, ...projQ];
+  const quarters = allQuarterKeys().filter(q => q >= '2024-Q1');
 
   const series = [
     { name: "CPI All Items", src: DATA.cpi, suffix: "%" },
@@ -1324,20 +1456,19 @@ function buildQuarterlyTable() {
   ];
 
   let html = '<table class="data-table"><thead><tr><th>Indicator</th>';
-  allQ.forEach((q, i) => {
-    const isProj = projQ.includes(q);
-    html += `<th class="right" style="${isProj ? 'color: var(--accent-purple);' : ''}">${q.replace('20','\'')}</th>`;
+  quarters.forEach(q => {
+    html += `<th class="right">${q.replace('20',"'")}</th>`;
   });
   html += '</tr></thead><tbody>';
 
   series.forEach(s => {
     html += `<tr><td class="row-header">${s.name}</td>`;
-    allQ.forEach(q => {
-      const isProj = projQ.includes(q);
-      const val = isProj ? (s.src.projected?.[q] ?? '--') : (s.src.quarterly?.[q] ?? '--');
-      const prev = !isProj && quarters.indexOf(q) > 0 ? s.src.quarterly[quarters[quarters.indexOf(q) - 1]] : null;
-      let cls = isProj ? 'val-projected' : '';
-      if (!isProj && prev !== null && val !== '--') {
+    quarters.forEach((q, qi) => {
+      const val = s.src.quarterly?.[q];
+      const prevKey = qi > 0 ? quarters[qi - 1] : null;
+      const prev = prevKey ? s.src.quarterly?.[prevKey] : null;
+      let cls = '';
+      if (val != null && prev != null) {
         if (s.name.includes('Unemployment')) {
           cls = val > prev ? 'val-neg' : val < prev ? 'val-pos' : '';
         } else if (s.name.includes('NFP') || s.name.includes('JOLTS') || s.name.includes('Earnings')) {
@@ -1346,7 +1477,7 @@ function buildQuarterlyTable() {
           cls = val > prev ? 'val-neg' : val < prev ? 'val-pos' : '';
         }
       }
-      html += `<td class="right ${cls}">${val !== '--' ? val.toFixed(1) + s.suffix : '--'}</td>`;
+      html += `<td class="right ${cls}">${val != null ? val.toFixed(1) + s.suffix : '--'}</td>`;
     });
     html += '</tr>';
   });
@@ -1355,8 +1486,25 @@ function buildQuarterlyTable() {
   return html;
 }
 
+function buildGdpTable() {
+  const keys = Object.keys(DATA.gdp.quarterly || {}).sort().slice(-8);
+  let html = '<table class="data-table"><thead><tr><th>Real GDP, q/q ann. %</th>';
+  keys.forEach(q => { html += `<th class="right">${q.replace('20',"'")}</th>`; });
+  html += '</tr></thead><tbody><tr><td class="row-header">BEA</td>';
+  keys.forEach(q => {
+    const v = DATA.gdp.quarterly[q];
+    html += `<td class="right">${v != null ? v.toFixed(1) + '%' : '--'}</td>`;
+  });
+  html += '</tr></tbody></table>';
+  return html;
+}
+
 function buildAnnualTable() {
-  const years = [2020, 2021, 2022, 2023, 2024, 2025];
+  const yearSet = new Set();
+  ['cpi','cpiCore','ppi','ppiCore','nfp','unrate','ahe'].forEach(k => {
+    Object.keys(DATA[k]?.annual || {}).forEach(y => yearSet.add(+y));
+  });
+  const years = [...yearSet].sort();
   const series = [
     { name: "CPI All Items", src: DATA.cpi.annual, suffix: "%" },
     { name: "CPI Core", src: DATA.cpiCore.annual, suffix: "%" },
@@ -1369,7 +1517,7 @@ function buildAnnualTable() {
 
   let html = '<table class="data-table"><thead><tr><th>Indicator</th>';
   years.forEach(y => { html += `<th class="right">${y}</th>`; });
-  html += '<th class="right" style="color:var(--accent-purple)">Δ 5yr</th></tr></thead><tbody>';
+  html += '<th class="right">Δ vs 2020</th></tr></thead><tbody>';
 
   series.forEach(s => {
     html += `<tr><td class="row-header">${s.name}</td>`;
@@ -1377,11 +1525,13 @@ function buildAnnualTable() {
       const v = s.src[y];
       html += `<td class="right">${v !== undefined ? (typeof v === 'number' ? v.toFixed(1) : v) + s.suffix : '--'}</td>`;
     });
-    const delta = (s.src[2025] ?? 0) - (s.src[2020] ?? 0);
-    const cls = s.name.includes('Unemployment') ? (delta > 0 ? 'val-neg' : 'val-pos') :
+    const latestYear = [...years].reverse().find(y => s.src[y] != null);
+    const delta = (latestYear != null && s.src[2020] != null) ? s.src[latestYear] - s.src[2020] : null;
+    const cls = delta == null ? '' :
+                s.name.includes('Unemployment') ? (delta > 0 ? 'val-neg' : 'val-pos') :
                 s.name.includes('NFP') ? (delta > 0 ? 'val-pos' : 'val-neg') :
                 (delta > 0 ? 'val-neg' : 'val-pos');
-    html += `<td class="right ${cls}">${delta > 0 ? '+' : ''}${delta.toFixed(1)}${s.suffix}</td>`;
+    html += `<td class="right ${cls}">${delta == null ? '--' : (delta > 0 ? '+' : '') + delta.toFixed(1) + s.suffix}</td>`;
     html += '</tr>';
   });
 
@@ -1407,7 +1557,7 @@ function buildInflationHeatMap() {
     const trendIcon = c.trend === 'up' ? '▲' : c.trend === 'down' ? '▼' : '—';
     const trendCls = c.trend === 'up' ? 'val-neg' : c.trend === 'down' ? 'val-pos' : '';
     html += `<tr>
-      <td class="row-header">${name}</td>
+      <td class="row-header">${name}${c.asOf && c.asOf !== '2026-08' ? ' (' + c.asOf + ')' : ''}</td>
       <td class="right">${c.weight.toFixed(1)}</td>
       <td class="right" style="background:${bg}; font-weight:600;">${c.yoy.toFixed(1)}%</td>
       <td class="right">${c.mom.toFixed(1)}%</td>
@@ -1425,9 +1575,7 @@ function buildInflationHeatMap() {
 // RELEASE CALENDAR
 // ═══════════════════════════════════════════
 function buildReleaseCalendar() {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const todayStr = today.toISOString().slice(0, 10);
+  const todayStr = localISODate();
 
   let html = '<table class="data-table"><thead><tr><th>Date</th><th>Release</th><th class="right">Status</th></tr></thead><tbody>';
   let nextUpDate = null;
@@ -1458,7 +1606,7 @@ function renderCPIDetail(container) {
     <div class="panel">
       <div class="panel-header">
         <div><div class="panel-title">CPI Headline vs Core — Quarterly Trend</div></div>
-        <span class="panel-badge badge-live">Live</span>
+        ${liveBadge()}
       </div>
       <div class="chart-container"><canvas id="chartCpiDetail"></canvas></div>
     </div>
@@ -1470,28 +1618,28 @@ function renderCPIDetail(container) {
     </div>
     <div class="panel panel-full">
       <div class="panel-header">
-        <div><div class="panel-title">CPI Component Detail Matrix</div></div>
+        <div><div class="panel-title">CPI Component Detail Matrix</div><div class="panel-subtitle">Rows marked 2026-03 were not refreshed. Weights were not re-fetched.</div></div>
       </div>
-      ${buildInflationHeatMap()}
+      <div class="matrix-scroll">${buildInflationHeatMap()}</div>
     </div>
     <div class="panel panel-full">
       <div class="panel-header">
-        <div><div class="panel-title">CPI — Shelter Deep Dive</div><div class="panel-subtitle">Shelter is 36.5% of CPI and the largest contributor to inflation</div></div>
+        <div><div class="panel-title">CPI — Shelter Deep Dive</div><div class="panel-subtitle">Monthly YoY from FRED CUSR0000SAH1 (shelter) and CUSR0000SEHC (OER). October 2025 was not published.</div></div>
       </div>
       <div class="chart-container"><canvas id="chartShelter"></canvas></div>
     </div>
   `;
 
   // CPI Detail chart
-  const labels = Object.keys(DATA.cpi.quarterly);
+  const labels = allQuarterKeys();
   const ctx1 = document.getElementById('chartCpiDetail');
-  chartInstances['chartCpiDetail'] = new Chart(ctx1, {
+  chartInstances['chartCpiDetail'] = createChart(ctx1, {
     type: 'line',
     data: {
       labels,
       datasets: [
-        { label: 'CPI All Items', data: labels.map(k => DATA.cpi.quarterly[k]), borderColor: '#ff9500', backgroundColor: 'rgba(255,149,0,0.1)', fill: true, tension: 0.3, borderWidth: 2.5, pointRadius: 4, pointBackgroundColor: '#ff9500' },
-        { label: 'CPI Core', data: labels.map(k => DATA.cpiCore.quarterly[k]), borderColor: '#0084ff', backgroundColor: 'rgba(0,132,255,0.08)', fill: true, tension: 0.3, borderWidth: 2, pointRadius: 3 },
+        { label: 'CPI All Items', data: seriesOnAxis(DATA.cpi.quarterly, labels), borderColor: '#ff9500', backgroundColor: 'rgba(255,149,0,0.1)', fill: true, tension: 0.3, borderWidth: 2.5, pointRadius: 4, pointBackgroundColor: '#ff9500', spanGaps: false },
+        { label: 'CPI Core', data: seriesOnAxis(DATA.cpiCore.quarterly, labels), borderColor: '#0084ff', backgroundColor: 'rgba(0,132,255,0.08)', fill: true, tension: 0.3, borderWidth: 2, pointRadius: 3, spanGaps: false },
         { label: 'Fed Target (2%)', data: new Array(labels.length).fill(2.0), borderColor: 'rgba(255,59,48,0.6)', borderDash: [8, 4], pointRadius: 0, borderWidth: 1.5 }
       ]
     },
@@ -1500,7 +1648,7 @@ function renderCPIDetail(container) {
       plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 9 } } } },
       scales: {
         x: { grid: { color: 'rgba(30,42,54,0.5)' }, ticks: { maxRotation: 45, font: { size: 9 } } },
-        y: { grid: { color: 'rgba(30,42,54,0.5)' }, ticks: { callback: v => v + '%' } }
+        y: { grid: { color: 'rgba(30,42,54,0.5)' }, ticks: { callback: pctAxisTick } }
       }
     }
   });
@@ -1511,7 +1659,7 @@ function renderCPIDetail(container) {
   const compColors = compVals.map(v => v > 3 ? 'rgba(255,59,48,0.7)' : v > 2 ? 'rgba(255,149,0,0.7)' : v > 0 ? 'rgba(0,200,83,0.5)' : 'rgba(0,132,255,0.5)');
 
   const ctx2 = document.getElementById('chartCpiComp');
-  chartInstances['chartCpiComp'] = new Chart(ctx2, {
+  chartInstances['chartCpiComp'] = createChart(ctx2, {
     type: 'bar',
     data: {
       labels: compNames,
@@ -1521,25 +1669,24 @@ function renderCPIDetail(container) {
       indexAxis: 'y', responsive: true, maintainAspectRatio: false,
       plugins: { legend: { display: false } },
       scales: {
-        x: { grid: { color: 'rgba(30,42,54,0.5)' }, ticks: { callback: v => v + '%' } },
+        x: { grid: { color: 'rgba(30,42,54,0.5)' }, ticks: { callback: pctAxisTick } },
         y: { grid: { display: false } }
       }
     }
   });
 
-  // Shelter trend (simulated monthly)
-  const shelterMonths = ['Mar-25','Apr-25','May-25','Jun-25','Jul-25','Aug-25','Sep-25','Oct-25','Nov-25','Dec-25','Jan-26','Feb-26'];
-  const shelterYoY = [5.2, 5.1, 5.0, 4.9, 4.8, 4.8, 4.7, 4.7, 4.6, 4.6, 4.6, 4.6];
-  const oerYoY = [5.5, 5.4, 5.3, 5.2, 5.1, 5.0, 4.9, 4.9, 4.8, 4.8, 4.7, 4.7];
+  const shelterMonths = DATA.shelterMonthly.labels;
+  const shelterYoY = DATA.shelterMonthly.shelter;
+  const oerYoY = DATA.shelterMonthly.oer;
 
   const ctx3 = document.getElementById('chartShelter');
-  chartInstances['chartShelter'] = new Chart(ctx3, {
+  chartInstances['chartShelter'] = createChart(ctx3, {
     type: 'line',
     data: {
       labels: shelterMonths,
       datasets: [
-        { label: 'Shelter YoY', data: shelterYoY, borderColor: '#ff9500', tension: 0.3, borderWidth: 2.5, pointRadius: 3, fill: false },
-        { label: 'OER YoY', data: oerYoY, borderColor: '#bb86fc', tension: 0.3, borderWidth: 2, pointRadius: 2, borderDash: [4,2], fill: false }
+        { label: 'Shelter YoY', data: shelterYoY, borderColor: '#ff9500', tension: 0.3, borderWidth: 2.5, pointRadius: 3, fill: false, spanGaps: false },
+        { label: 'OER YoY', data: oerYoY, borderColor: '#bb86fc', tension: 0.3, borderWidth: 2, pointRadius: 2, borderDash: [4,2], fill: false, spanGaps: false }
       ]
     },
     options: {
@@ -1547,7 +1694,7 @@ function renderCPIDetail(container) {
       plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 9 } } } },
       scales: {
         x: { grid: { color: 'rgba(30,42,54,0.5)' } },
-        y: { grid: { color: 'rgba(30,42,54,0.5)' }, ticks: { callback: v => v + '%' } }
+        y: { grid: { color: 'rgba(30,42,54,0.5)' }, ticks: { callback: pctAxisTick } }
       }
     }
   });
@@ -1561,7 +1708,7 @@ function renderPPIDetail(container) {
     <div class="panel">
       <div class="panel-header">
         <div><div class="panel-title">PPI Final Demand — Quarterly Trend</div></div>
-        <span class="panel-badge badge-live">Live</span>
+        ${liveBadge()}
       </div>
       <div class="chart-container"><canvas id="chartPpiTrend"></canvas></div>
     </div>
@@ -1573,9 +1720,9 @@ function renderPPIDetail(container) {
     </div>
     <div class="panel panel-full">
       <div class="panel-header">
-        <div><div class="panel-title">PPI Component Detail</div></div>
+        <div><div class="panel-title">PPI Component Detail</div><div class="panel-subtitle">Food, energy, and goods ex food &amp; energy are August 2026. Rows marked 2026-03 were not refreshed. Weights were not re-fetched.</div></div>
       </div>
-      ${buildPPITable()}
+      <div class="matrix-scroll">${buildPPITable()}</div>
     </div>
     <div class="panel panel-full">
       <div class="panel-header">
@@ -1588,7 +1735,7 @@ function renderPPIDetail(container) {
   // PPI trend
   const labels = Object.keys(DATA.ppi.quarterly);
   const ctx1 = document.getElementById('chartPpiTrend');
-  chartInstances['chartPpiTrend'] = new Chart(ctx1, {
+  chartInstances['chartPpiTrend'] = createChart(ctx1, {
     type: 'line',
     data: {
       labels,
@@ -1602,7 +1749,7 @@ function renderPPIDetail(container) {
       plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 9 } } } },
       scales: {
         x: { grid: { color: 'rgba(30,42,54,0.5)' }, ticks: { maxRotation: 45, font: { size: 9 } } },
-        y: { grid: { color: 'rgba(30,42,54,0.5)' }, ticks: { callback: v => v + '%' } }
+        y: { grid: { color: 'rgba(30,42,54,0.5)' }, ticks: { callback: pctAxisTick } }
       }
     }
   });
@@ -1613,7 +1760,7 @@ function renderPPIDetail(container) {
   const compColors = compVals.map(v => v > 3 ? 'rgba(255,59,48,0.7)' : v > 1 ? 'rgba(255,149,0,0.7)' : v > 0 ? 'rgba(0,200,83,0.5)' : 'rgba(0,132,255,0.5)');
 
   const ctx2 = document.getElementById('chartPpiComp');
-  chartInstances['chartPpiComp'] = new Chart(ctx2, {
+  chartInstances['chartPpiComp'] = createChart(ctx2, {
     type: 'bar',
     data: {
       labels: compNames,
@@ -1622,27 +1769,30 @@ function renderPPIDetail(container) {
     options: {
       indexAxis: 'y', responsive: true, maintainAspectRatio: false,
       plugins: { legend: { display: false } },
-      scales: { x: { grid: { color: 'rgba(30,42,54,0.5)' }, ticks: { callback: v => v + '%' } }, y: { grid: { display: false } } }
+      scales: { x: { grid: { color: 'rgba(30,42,54,0.5)' }, ticks: { callback: pctAxisTick } }, y: { grid: { display: false } } }
     }
   });
 
   // Pipeline chart
   const pipeLabels = Object.keys(DATA.ppi.quarterly).slice(-8);
   const ctx3 = document.getElementById('chartPipeline');
-  chartInstances['chartPipeline'] = new Chart(ctx3, {
+  chartInstances['chartPipeline'] = createChart(ctx3, {
     type: 'line',
     data: {
       labels: pipeLabels,
       datasets: [
         { label: 'PPI (Leading)', data: pipeLabels.map(k => DATA.ppi.quarterly[k]), borderColor: '#ffd600', tension: 0.3, borderWidth: 2.5, pointRadius: 4 },
         { label: 'CPI (Lagging)', data: pipeLabels.map(k => DATA.cpi.quarterly[k]), borderColor: '#ff9500', tension: 0.3, borderWidth: 2.5, pointRadius: 4 },
-        { label: 'Spread (PPI-CPI)', data: pipeLabels.map(k => (DATA.ppi.quarterly[k] - DATA.cpi.quarterly[k]).toFixed(2)), borderColor: '#00e5ff', tension: 0.3, borderWidth: 1.5, pointRadius: 2, borderDash: [4,3] }
+        { label: 'Spread (PPI-CPI)', data: pipeLabels.map(k => {
+            const p = DATA.ppi.quarterly[k], c = DATA.cpi.quarterly[k];
+            return (p == null || c == null) ? null : round1(p - c);
+          }), borderColor: '#00e5ff', tension: 0.3, borderWidth: 1.5, pointRadius: 2, borderDash: [4,3], spanGaps: false }
       ]
     },
     options: {
       responsive: true, maintainAspectRatio: false,
       plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 9 } } } },
-      scales: { x: { grid: { color: 'rgba(30,42,54,0.5)' } }, y: { grid: { color: 'rgba(30,42,54,0.5)' }, ticks: { callback: v => v + '%' } } }
+      scales: { x: { grid: { color: 'rgba(30,42,54,0.5)' } }, y: { grid: { color: 'rgba(30,42,54,0.5)' }, ticks: { callback: pctAxisTick } } }
     }
   });
 }
@@ -1654,7 +1804,7 @@ function buildPPITable() {
     const c = comps[name];
     const delta = c.yoy - c.prev;
     const cls = delta > 0 ? 'val-neg' : delta < 0 ? 'val-pos' : '';
-    html += `<tr><td class="row-header">${name}</td><td class="right">${c.weight}</td><td class="right" style="font-weight:600">${c.yoy.toFixed(1)}%</td><td class="right">${c.mom.toFixed(1)}%</td><td class="right">${c.prev.toFixed(1)}%</td><td class="right ${cls}">${delta > 0 ? '+' : ''}${delta.toFixed(1)}pp</td></tr>`;
+    html += `<tr><td class="row-header">${name}${c.asOf && c.asOf !== '2026-08' ? ' (' + c.asOf + ')' : ''}</td><td class="right">${c.weight}</td><td class="right" style="font-weight:600">${c.yoy.toFixed(1)}%</td><td class="right">${c.mom.toFixed(1)}%</td><td class="right">${c.prev.toFixed(1)}%</td><td class="right ${cls}">${delta > 0 ? '+' : ''}${delta.toFixed(1)}pp</td></tr>`;
   });
   html += '</tbody></table>';
   return html;
@@ -1668,7 +1818,7 @@ function renderEmployment(container) {
     <div class="panel">
       <div class="panel-header">
         <div><div class="panel-title">Nonfarm Payrolls — Quarterly Trend</div></div>
-        <span class="panel-badge badge-live">Live</span>
+        ${liveBadge()}
       </div>
       <div class="chart-container"><canvas id="chartNfpTrend"></canvas></div>
     </div>
@@ -1680,9 +1830,9 @@ function renderEmployment(container) {
     </div>
     <div class="panel panel-full">
       <div class="panel-header">
-        <div><div class="panel-title">Employment by Sector — Monthly Change</div></div>
+        <div><div class="panel-title">Employment by Sector — Monthly Change</div><div class="panel-subtitle">March 2026 snapshot. Sector series were not re-fetched.</div></div>
       </div>
-      ${buildSectorTable()}
+      <div class="matrix-scroll">${buildSectorTable()}</div>
     </div>
     <div class="panel">
       <div class="panel-header">
@@ -1701,7 +1851,7 @@ function renderEmployment(container) {
   // NFP trend
   const labels = Object.keys(DATA.nfp.quarterly);
   const ctx1 = document.getElementById('chartNfpTrend');
-  chartInstances['chartNfpTrend'] = new Chart(ctx1, {
+  chartInstances['chartNfpTrend'] = createChart(ctx1, {
     type: 'bar',
     data: {
       labels,
@@ -1710,7 +1860,7 @@ function renderEmployment(container) {
         data: labels.map(k => DATA.nfp.quarterly[k]),
         backgroundColor: labels.map(k => {
           const v = DATA.nfp.quarterly[k];
-          return v > 500 ? 'rgba(0,200,83,0.6)' : v > 400 ? 'rgba(0,132,255,0.5)' : 'rgba(255,149,0,0.5)';
+          return v < 0 ? 'rgba(255,59,48,0.55)' : v > 500 ? 'rgba(0,200,83,0.6)' : v > 400 ? 'rgba(0,132,255,0.5)' : 'rgba(255,149,0,0.5)';
         }),
         borderWidth: 0,
         barPercentage: 0.7
@@ -1729,7 +1879,7 @@ function renderEmployment(container) {
   // Labor market — unemployment + U-6 + LFPR
   const urLabels = Object.keys(DATA.unrate.quarterly);
   const ctx2 = document.getElementById('chartLabor');
-  chartInstances['chartLabor'] = new Chart(ctx2, {
+  chartInstances['chartLabor'] = createChart(ctx2, {
     type: 'line',
     data: {
       labels: urLabels,
@@ -1743,7 +1893,7 @@ function renderEmployment(container) {
       plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 9 } } } },
       scales: {
         x: { grid: { color: 'rgba(30,42,54,0.5)' }, ticks: { maxRotation: 45, font: { size: 9 } } },
-        y: { grid: { color: 'rgba(30,42,54,0.5)' }, ticks: { callback: v => v + '%' } }
+        y: { grid: { color: 'rgba(30,42,54,0.5)' }, ticks: { callback: pctAxisTick } }
       }
     }
   });
@@ -1752,7 +1902,7 @@ function renderEmployment(container) {
   const sectors = Object.keys(DATA.empSectors);
   const sectorVals = sectors.map(s => DATA.empSectors[s].mom);
   const ctx3 = document.getElementById('chartSector');
-  chartInstances['chartSector'] = new Chart(ctx3, {
+  chartInstances['chartSector'] = createChart(ctx3, {
     type: 'bar',
     data: {
       labels: sectors,
@@ -1768,20 +1918,23 @@ function renderEmployment(container) {
   // Wage vs Inflation
   const wageLabels = Object.keys(DATA.ahe.quarterly).slice(-8);
   const ctx4 = document.getElementById('chartWageInfl');
-  chartInstances['chartWageInfl'] = new Chart(ctx4, {
+  chartInstances['chartWageInfl'] = createChart(ctx4, {
     type: 'line',
     data: {
       labels: wageLabels,
       datasets: [
         { label: 'AHE YoY', data: wageLabels.map(k => DATA.ahe.quarterly[k]), borderColor: '#00c853', tension: 0.3, borderWidth: 2.5, fill: false, pointRadius: 3 },
         { label: 'CPI YoY', data: wageLabels.map(k => DATA.cpi.quarterly[k]), borderColor: '#ff9500', tension: 0.3, borderWidth: 2.5, fill: false, pointRadius: 3 },
-        { label: 'Real Wage Growth', data: wageLabels.map(k => (DATA.ahe.quarterly[k] - DATA.cpi.quarterly[k]).toFixed(2)), borderColor: '#00e5ff', tension: 0.3, borderWidth: 1.5, pointRadius: 2, borderDash: [4,3], backgroundColor: 'rgba(0,229,255,0.08)', fill: true }
+        { label: 'Real Wage Growth', data: wageLabels.map(k => {
+            const a = DATA.ahe.quarterly[k], c = DATA.cpi.quarterly[k];
+            return (a == null || c == null) ? null : round1(a - c);
+          }), borderColor: '#00e5ff', tension: 0.3, borderWidth: 1.5, pointRadius: 2, borderDash: [4,3], backgroundColor: 'rgba(0,229,255,0.08)', fill: true, spanGaps: false }
       ]
     },
     options: {
       responsive: true, maintainAspectRatio: false,
       plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 9 } } } },
-      scales: { x: { grid: { color: 'rgba(30,42,54,0.5)' } }, y: { grid: { color: 'rgba(30,42,54,0.5)' }, ticks: { callback: v => v + '%' } } }
+      scales: { x: { grid: { color: 'rgba(30,42,54,0.5)' } }, y: { grid: { color: 'rgba(30,42,54,0.5)' }, ticks: { callback: pctAxisTick } } }
     }
   });
 }
@@ -1825,7 +1978,7 @@ function renderProjections(container) {
         </div>
         <div class="projection-values">
           <span style="color:${p.color};font-weight:600;">Now: ${p.current}${p.label.includes('K') ? 'K' : '%'}</span>
-          <span class="val-projected">→ ${p.proj2026}${p.label.includes('K') ? 'K' : '%'}</span>
+          <span class="val-projected">illustrative Q4: ${p.proj2026}${p.label.includes('K') ? 'K' : '%'}</span>
         </div>
       </div>`;
   });
@@ -1833,53 +1986,53 @@ function renderProjections(container) {
   container.innerHTML = `
     <div class="panel panel-full">
       <div class="panel-header">
-        <div><div class="panel-title">Consensus Projections — 2026 Year-End</div><div class="panel-subtitle">Current vs Projected (FOMC SEP, CBO, Blue Chip Consensus)</div></div>
-        <span class="panel-badge badge-projected">Projected</span>
+        <div><div class="panel-title">Illustrative 2026 Scenario</div><div class="panel-subtitle">Not a forecast. Not FOMC, CBO, or Blue Chip. The Q4 markers and the scenario table are the prior file's illustrative figures and were not refreshed with the August 2026 release.</div></div>
+        <span class="panel-badge badge-projected">Illustrative</span>
       </div>
       ${barsHtml}
     </div>
     <div class="panel">
       <div class="panel-header">
-        <div><div class="panel-title">CPI Projected Path</div></div>
+        <div><div class="panel-title">CPI Path with an Illustrative Band</div><div class="panel-subtitle">The shaded band is a fixed formula, ±(0.3 + 0.15 × step) percentage points. It is not a statistical confidence interval.</div></div>
       </div>
       <div class="chart-container"><canvas id="chartCpiProj"></canvas></div>
     </div>
     <div class="panel">
       <div class="panel-header">
-        <div><div class="panel-title">Employment Projected Path</div></div>
+        <div><div class="panel-title">Unemployment Path</div><div class="panel-subtitle">Actual quarters, then the prior file's illustrative Q3–Q4 scenario. The 4.2% line is a reference, not an estimated NAIRU.</div></div>
       </div>
       <div class="chart-container"><canvas id="chartEmpProj"></canvas></div>
     </div>
     <div class="panel panel-full">
       <div class="panel-header">
-        <div><div class="panel-title">Scenario Analysis</div><div class="panel-subtitle">Base / Upside / Downside Scenarios for Key Indicators by Q4 2026</div></div>
+        <div><div class="panel-title">Scenario Table</div><div class="panel-subtitle">Illustrative layout only. These figures are not a forecast and were not refreshed.</div></div>
       </div>
-      ${buildScenarioTable()}
+      <div class="matrix-scroll">${buildScenarioTable()}</div>
     </div>
   `;
 
   // CPI proj chart with confidence band
   const allQ = [...Object.keys(DATA.cpi.quarterly).slice(-6), ...Object.keys(DATA.cpi.projected)];
   const cpiVals = allQ.map(k => DATA.cpi.quarterly[k] ?? DATA.cpi.projected[k]);
-  const upper = cpiVals.map((v, i) => i >= allQ.length - 3 ? v + 0.3 + (i - (allQ.length - 4)) * 0.15 : null);
-  const lower = cpiVals.map((v, i) => i >= allQ.length - 3 ? v - 0.3 - (i - (allQ.length - 4)) * 0.15 : null);
+  const upper = cpiVals.map((v, i) => i >= allQ.length - 3 ? round1(v + 0.3 + (i - (allQ.length - 4)) * 0.15) : null);
+  const lower = cpiVals.map((v, i) => i >= allQ.length - 3 ? round1(v - 0.3 - (i - (allQ.length - 4)) * 0.15) : null);
 
   const ctx1 = document.getElementById('chartCpiProj');
-  chartInstances['chartCpiProj'] = new Chart(ctx1, {
+  chartInstances['chartCpiProj'] = createChart(ctx1, {
     type: 'line',
     data: {
       labels: allQ,
       datasets: [
         { label: 'CPI Path', data: cpiVals, borderColor: '#ff9500', tension: 0.3, borderWidth: 2.5, pointRadius: 3 },
-        { label: 'Upper Band', data: upper, borderColor: 'rgba(255,149,0,0.3)', backgroundColor: 'rgba(255,149,0,0.08)', fill: '+1', tension: 0.3, borderWidth: 1, pointRadius: 0 },
-        { label: 'Lower Band', data: lower, borderColor: 'rgba(255,149,0,0.3)', fill: false, tension: 0.3, borderWidth: 1, pointRadius: 0 },
+        { label: 'Illustrative upper (fixed formula)', data: upper, borderColor: 'rgba(255,149,0,0.3)', backgroundColor: 'rgba(255,149,0,0.08)', fill: '+1', tension: 0.3, borderWidth: 1, pointRadius: 0 },
+        { label: 'Illustrative lower (fixed formula)', data: lower, borderColor: 'rgba(255,149,0,0.3)', fill: false, tension: 0.3, borderWidth: 1, pointRadius: 0 },
         { label: 'Fed Target', data: new Array(allQ.length).fill(2.0), borderColor: 'rgba(255,59,48,0.5)', borderDash: [8,4], pointRadius: 0, borderWidth: 1 }
       ]
     },
     options: {
       responsive: true, maintainAspectRatio: false,
       plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 9 } } } },
-      scales: { x: { grid: { color: 'rgba(30,42,54,0.5)' } }, y: { grid: { color: 'rgba(30,42,54,0.5)' }, ticks: { callback: v => v + '%' } } }
+      scales: { x: { grid: { color: 'rgba(30,42,54,0.5)' } }, y: { grid: { color: 'rgba(30,42,54,0.5)' }, ticks: { callback: pctAxisTick } } }
     }
   });
 
@@ -1888,19 +2041,19 @@ function renderProjections(container) {
   const urVals = empQ.map(k => DATA.unrate.quarterly[k] ?? DATA.unrate.projected[k]);
 
   const ctx2 = document.getElementById('chartEmpProj');
-  chartInstances['chartEmpProj'] = new Chart(ctx2, {
+  chartInstances['chartEmpProj'] = createChart(ctx2, {
     type: 'line',
     data: {
       labels: empQ,
       datasets: [
         { label: 'Unemployment Rate', data: urVals, borderColor: '#ff3b30', tension: 0.3, borderWidth: 2.5, pointRadius: 3 },
-        { label: 'NAIRU Est.', data: new Array(empQ.length).fill(4.2), borderColor: 'rgba(0,229,255,0.5)', borderDash: [6,4], pointRadius: 0, borderWidth: 1 }
+        { label: '4.2% reference', data: new Array(empQ.length).fill(4.2), borderColor: 'rgba(0,229,255,0.5)', borderDash: [6,4], pointRadius: 0, borderWidth: 1 }
       ]
     },
     options: {
       responsive: true, maintainAspectRatio: false,
       plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 9 } } } },
-      scales: { x: { grid: { color: 'rgba(30,42,54,0.5)' } }, y: { grid: { color: 'rgba(30,42,54,0.5)' }, ticks: { callback: v => v + '%' } } }
+      scales: { x: { grid: { color: 'rgba(30,42,54,0.5)' } }, y: { ...paddedRange([...urVals, 4.2], 1.5), grid: { color: 'rgba(30,42,54,0.5)' }, ticks: { callback: pctAxisTick } } }
     }
   });
 }
@@ -1931,7 +2084,7 @@ function renderMatrix(container) {
   container.innerHTML = `
     <div class="panel panel-full">
       <div class="panel-header">
-        <div><div class="panel-title">Cross-Indicator Correlation Matrix</div><div class="panel-subtitle">Rolling 8-quarter correlations among key indicators</div></div>
+        <div><div class="panel-title">Cross-Indicator Correlation Matrix</div><div class="panel-subtitle">Pearson correlation of the 8 most recent quarters present in both series (levels, computed on this page).</div></div>
       </div>
       <div class="matrix-scroll">${buildCorrelationMatrix()}</div>
     </div>
@@ -1951,33 +2104,37 @@ function renderMatrix(container) {
 }
 
 function buildCorrelationMatrix() {
-  const indicators = ['CPI', 'Core CPI', 'PPI', 'Core PPI', 'NFP', 'Unemp', 'AHE'];
-  // Pre-computed correlations (based on quarterly data relationships)
-  const corr = [
-    [1.00, 0.94, 0.72, 0.68, -0.31, -0.22, 0.81],
-    [0.94, 1.00, 0.65, 0.71, -0.28, -0.19, 0.85],
-    [0.72, 0.65, 1.00, 0.91, -0.15, -0.11, 0.55],
-    [0.68, 0.71, 0.91, 1.00, -0.12, -0.08, 0.58],
-    [-0.31, -0.28, -0.15, -0.12, 1.00, -0.82, 0.21],
-    [-0.22, -0.19, -0.11, -0.08, -0.82, 1.00, -0.15],
-    [0.81, 0.85, 0.55, 0.58, 0.21, -0.15, 1.00]
+  const indicators = [
+    { name: 'CPI', data: DATA.cpi.quarterly },
+    { name: 'Core CPI', data: DATA.cpiCore.quarterly },
+    { name: 'PPI', data: DATA.ppi.quarterly },
+    { name: 'Core PPI', data: DATA.ppiCore.quarterly },
+    { name: 'NFP', data: DATA.nfp.quarterly },
+    { name: 'Unemp', data: DATA.unrate.quarterly },
+    { name: 'AHE', data: DATA.ahe.quarterly },
   ];
+  const corr = indicators.map(row => indicators.map(col => {
+    if (row.name === col.name) return 1;
+    const v = quarterlyPearson(row.data, col.data, 8);
+    return v == null ? null : round1(v * 100) / 100;
+  }));
 
   let html = '<table class="data-table"><thead><tr><th></th>';
-  indicators.forEach(i => { html += `<th class="right" style="font-size:9px">${i}</th>`; });
+  indicators.forEach(i => { html += `<th class="right" style="font-size:9px">${i.name}</th>`; });
   html += '</tr></thead><tbody>';
 
-  indicators.forEach((name, i) => {
-    html += `<tr><td class="row-header">${name}</td>`;
+  indicators.forEach((row, i) => {
+    html += `<tr><td class="row-header">${row.name}</td>`;
     corr[i].forEach((v, j) => {
       let bg;
-      if (i === j) bg = 'rgba(255,149,0,0.2)';
+      if (v == null) bg = 'transparent';
+      else if (i === j) bg = 'rgba(255,149,0,0.2)';
       else if (v > 0.7) bg = 'rgba(0,200,83,0.25)';
       else if (v > 0.3) bg = 'rgba(0,200,83,0.12)';
       else if (v > -0.3) bg = 'rgba(255,214,0,0.1)';
       else if (v > -0.7) bg = 'rgba(255,59,48,0.12)';
       else bg = 'rgba(255,59,48,0.25)';
-      html += `<td class="right" style="background:${bg};font-weight:${i===j?'700':'400'}">${v.toFixed(2)}</td>`;
+      html += `<td class="right" style="background:${bg};font-weight:${i===j?'700':'400'}">${v == null ? '--' : v.toFixed(2)}</td>`;
     });
     html += '</tr>';
   });
@@ -1987,7 +2144,7 @@ function buildCorrelationMatrix() {
 }
 
 function buildChangeMatrix() {
-  const quarters = ["2024-Q3","2024-Q4","2025-Q1","2025-Q2","2025-Q3","2025-Q4","2026-Q1"];
+  const quarters = allQuarterKeys().slice(-8);
   const series = [
     { name: "CPI", data: DATA.cpi.quarterly },
     { name: "Core CPI", data: DATA.cpiCore.quarterly },
@@ -2004,10 +2161,11 @@ function buildChangeMatrix() {
   series.forEach(s => {
     html += `<tr><td class="row-header">${s.name}</td>`;
     quarters.forEach((q, qi) => {
-      const allQ = Object.keys(s.data);
-      const idx = allQ.indexOf(q);
-      if (idx > 0) {
-        const delta = s.data[q] - s.data[allQ[idx-1]];
+      const prevKey = qi > 0 ? quarters[qi - 1] : null;
+      const cur = s.data[q];
+      const prev = prevKey != null ? s.data[prevKey] : null;
+      if (cur != null && prev != null) {
+        const delta = cur - prev;
         const arrow = delta > 0 ? '▲' : delta < 0 ? '▼' : '—';
         const isInflation = !s.name.includes('Unemp');
         let bg;
@@ -2029,7 +2187,7 @@ function buildChangeMatrix() {
 }
 
 function buildZScoreMatrix() {
-  const quarters = ["2024-Q3","2024-Q4","2025-Q1","2025-Q2","2025-Q3","2025-Q4","2026-Q1"];
+  const quarters = allQuarterKeys().slice(-8);
   const series = [
     { name: "CPI", data: DATA.cpi.quarterly },
     { name: "Core CPI", data: DATA.cpiCore.quarterly },
@@ -2043,15 +2201,13 @@ function buildZScoreMatrix() {
   html += '</tr></thead><tbody>';
 
   series.forEach(s => {
-    const allQ = Object.keys(s.data);
     html += `<tr><td class="row-header">${s.name}</td>`;
-    quarters.forEach(q => {
-      const idx = allQ.indexOf(q);
-      if (idx >= 3) {
-        const window = [s.data[allQ[idx-3]], s.data[allQ[idx-2]], s.data[allQ[idx-1]], s.data[q]];
+    quarters.forEach((q, qi) => {
+      const window = qi >= 3 ? quarters.slice(qi - 3, qi + 1).map(k => s.data[k]) : null;
+      if (window && window.every(v => v != null && isFinite(v))) {
         const mean = window.reduce((a,b) => a+b, 0) / 4;
-        const std = Math.sqrt(window.reduce((a,b) => a + (b-mean)**2, 0) / 4) || 0.01;
-        const z = (s.data[q] - mean) / std;
+        const std = Math.sqrt(window.reduce((a,b) => a + (b-mean)**2, 0) / 4);
+        const z = std ? (s.data[q] - mean) / std : 0;
         let bg;
         if (Math.abs(z) < 0.5) bg = 'rgba(255,214,0,0.1)';
         else if (z > 1) bg = 'rgba(255,59,48,0.25)';
@@ -2076,6 +2232,12 @@ function buildZScoreMatrix() {
 // that gets charted or a fact stated without a source. Data layer arrives
 // in Phase 2.
 // ═══════════════════════════════════════════
+// Set this to a same-origin image, GIF, or video of a real recorded run, for
+// example 'news-sample.gif' or 'news-sample.mp4', then commit that file next
+// to index.html. Leave it empty until there is a real recording. Do not point
+// it at an invented answer.
+const NEWS_RECORDED_SAMPLE = '';
+
 const NEWS_DEFAULTS = {
   routerModel: 'moonshotai/kimi-k2.6',
   fastModel: 'deepseek/deepseek-v4-pro:online',
@@ -2094,7 +2256,7 @@ function mountNewsChart(config) {
   const el = document.getElementById('newsChart');
   if (!el || !config) return;
   destroyChart('newsChart');
-  chartInstances['newsChart'] = new Chart(el, config);
+  chartInstances['newsChart'] = createChart(el, config);
 }
 
 function getGsKeys() {
@@ -2183,7 +2345,11 @@ async function newsCachePut(key, value) {
   } catch { /* cache is best-effort */ }
 }
 
-// ── Price providers: Stooq (free, proxied) then Twelve Data then Alpha Vantage ──
+// ── Price providers: Twelve Data, then Alpha Vantage compact, then Stooq ──
+// Twelve Data is the one that still returns daily history with a free key.
+// Stooq's public CSV now requires a key and a browser challenge, and the host
+// does not send CORS headers, so the deployed site cannot call it. Alpha
+// Vantage's outputsize=full is a premium endpoint; compact is the free plan.
 function providerError(provider, message) {
   const e = new Error(message);
   e.provider = provider;
@@ -2206,14 +2372,24 @@ function parseStooqCsv(text) {
 }
 
 async function fetchStooq(ticker, startISO, endISO) {
-  const qs = `s=${encodeURIComponent(ticker.toLowerCase())}.us&i=d&d1=${startISO.replace(/-/g, '')}&d2=${endISO.replace(/-/g, '')}`;
+  const key = getGsKeys().stooq;
+  let qs = `s=${encodeURIComponent(ticker.toLowerCase())}.us&i=d&d1=${startISO.replace(/-/g, '')}&d2=${endISO.replace(/-/g, '')}`;
+  if (key) qs += `&apikey=${encodeURIComponent(key)}`;
   const url = IS_LOCAL ? `/api/stooq?${qs}` : `https://stooq.com/q/d/l/?${qs}`;
+  if (!IS_LOCAL) {
+    throw providerError('stooq', 'blocked by CORS on this host. Stooq also requires an API key and often returns a browser challenge instead of prices. Twelve Data is the working provider.');
+  }
   let res;
   try { res = await fetch(url); }
-  catch { throw providerError('stooq', IS_LOCAL ? 'proxy fetch failed (is server.py running?)' : 'blocked by CORS (needs a proxy on remote hosts)'); }
+  catch { throw providerError('stooq', 'proxy fetch failed (is server.py running?)'); }
   if (!res.ok) throw providerError('stooq', `HTTP ${res.status}`);
-  const data = parseStooqCsv(await res.text());
-  if (!data.length) throw providerError('stooq', 'empty or unrecognized CSV');
+  const raw = await res.text();
+  const data = parseStooqCsv(raw);
+  if (!data.length) {
+    throw providerError('stooq', /<html|captcha|api key/i.test(raw)
+      ? 'Stooq returned a challenge page instead of CSV. It now requires an API key.'
+      : 'empty or unrecognized CSV. Stooq now requires an API key.');
+  }
   return { name: 'stooq', adjusted: 'split-adjusted close', data };
 }
 
@@ -2238,7 +2414,7 @@ async function fetchTwelveData(ticker, startISO, endISO) {
 async function fetchAlphaVantage(ticker, startISO, endISO) {
   const key = getGsKeys().alphavantage;
   if (!key) throw providerError('alphavantage', 'no key set');
-  const url = `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=${encodeURIComponent(ticker)}&outputsize=full&apikey=${key}`;
+  const url = `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=${encodeURIComponent(ticker)}&outputsize=compact&apikey=${key}`;
   let res;
   try { res = await fetch(url); }
   catch { throw providerError('alphavantage', 'network error'); }
@@ -2250,8 +2426,16 @@ async function fetchAlphaVantage(ticker, startISO, endISO) {
     .map(([date, v]) => ({ date, close: parseFloat(v['4. close']) }))
     .filter(p => /^\d{4}-\d{2}-\d{2}$/.test(p.date) && p.date >= startISO && p.date <= endISO && isFinite(p.close) && p.close > 0)
     .sort((a, b) => a.date < b.date ? -1 : 1);
-  if (!data.length) throw providerError('alphavantage', 'empty result in range');
-  return { name: 'alphavantage', adjusted: 'unadjusted close', data };
+  if (!data.length) throw providerError('alphavantage', 'empty result in range. Compact covers about the last 100 trading days; outputsize=full is a paid plan.');
+  const truncated = data[0].date > startISO;
+  return {
+    name: 'alphavantage',
+    adjusted: truncated
+      ? `unadjusted close, compact (about 100 sessions, from ${data[0].date})`
+      : 'unadjusted close, compact (about 100 sessions)',
+    data,
+    truncated
+  };
 }
 
 // One interface over all providers; caches so repeat queries cost zero API calls
@@ -2260,10 +2444,10 @@ async function getDailyCloses(ticker, startISO, endISO) {
   const cached = await newsCacheGet(cacheKey);
   if (cached) return { ...cached, cached: true, failures: [] };
   const failures = [];
-  for (const provider of [fetchStooq, fetchTwelveData, fetchAlphaVantage]) {
+  for (const provider of [fetchTwelveData, fetchAlphaVantage, fetchStooq]) {
     try {
       const r = await provider(ticker, startISO, endISO);
-      const value = { data: r.data, provider: r.name, adjusted: r.adjusted };
+      const value = { data: r.data, provider: r.name, adjusted: r.adjusted, truncated: !!r.truncated };
       await newsCachePut(cacheKey, value);
       return { ...value, cached: false, failures };
     } catch (e) {
@@ -2289,7 +2473,7 @@ async function getFredDailyCached(seriesId, startISO, endISO) {
 }
 
 function resolveNewsRange(r) {
-  const endISO = (r?.end && /^\d{4}-\d{2}-\d{2}$/.test(r.end)) ? r.end : new Date().toISOString().slice(0, 10);
+  const endISO = (r?.end && /^\d{4}-\d{2}-\d{2}$/.test(r.end)) ? r.end : localISODate();
   if (r?.start && /^\d{4}-\d{2}-\d{2}$/.test(r.start)) return { startISO: r.start, endISO };
   // Period is anchored to the end date, not today, so historical ranges resolve correctly
   const d = new Date(endISO + 'T12:00:00Z');
@@ -2395,6 +2579,32 @@ function divergenceWindows(a, b, threshold = 5, window = 63) {
     .map(w => ({ start: w.start, end: w.end, leader: w.sign > 0 ? 'A' : 'B', magnitude: w.magnitude }));
 }
 
+function pearsonLevels(xs, ys) {
+  const n = xs.length;
+  if (n < 3 || ys.length !== n) return null;
+  if (xs.some(v => !isFinite(v)) || ys.some(v => !isFinite(v))) return null;
+  const mx = xs.reduce((a, b) => a + b, 0) / n;
+  const my = ys.reduce((a, b) => a + b, 0) / n;
+  let cov = 0, vx = 0, vy = 0;
+  for (let i = 0; i < n; i++) {
+    const dx = xs[i] - mx, dy = ys[i] - my;
+    cov += dx * dy;
+    vx += dx * dx;
+    vy += dy * dy;
+  }
+  const denom = Math.sqrt(vx * vy);
+  return denom ? cov / denom : null;
+}
+
+// Pearson correlation of levels over the most recent `window` quarters present in both maps.
+function quarterlyPearson(a, b, window = 8) {
+  if (!a || !b) return null;
+  const keys = Object.keys(a).filter(k => Object.prototype.hasOwnProperty.call(b, k) && isFinite(a[k]) && isFinite(b[k])).sort();
+  const use = keys.slice(-window);
+  if (use.length < 3) return null;
+  return pearsonLevels(use.map(k => a[k]), use.map(k => b[k]));
+}
+
 function correlationDaily(a, b) {
   const ra = [], rb = [];
   for (let i = 1; i < a.length; i++) {
@@ -2469,6 +2679,41 @@ function runStatsTests() {
   same('correlation degenerate input is null', correlationDaily(mk([['d1', 100]]), mk([['d1', 100]])), null);
   same('parseStooqCsv drops zero-close rows', parseStooqCsv('Date,Open,High,Low,Close,Volume\n2025-01-01,0,0,0,0,10\n2025-01-02,0,0,0,50,10').length, 1);
 
+  // FRED date strings must stay on the calendar date in any timezone.
+  same('toQuarterlyMap keeps January on 2025-Q1', JSON.stringify(toQuarterlyMap([{ date: '2025-01-01', value: 1.26 }])), JSON.stringify({ '2025-Q1': 1.3 }));
+  same('toAnnualMap keeps the calendar year', JSON.stringify(toAnnualMap([{ date: '2025-01-01', value: 2.04 }])), JSON.stringify({ 2025: 2 }));
+  same('fmtWindowLabel January 1 stays January', fmtWindowLabel({ start: '2025-01-01', end: '2025-03-01' }), 'Jan-Mar 2025');
+  same('quarterKeyFromDate December is Q4', quarterKeyFromDate('2024-12-01'), '2024-Q4');
+
+  const levels = [];
+  for (let y = 2023; y <= 2024; y++) {
+    for (let m = 1; m <= 12; m++) levels.push({ date: `${y}-${String(m).padStart(2, '0')}-01`, value: 100 + (y - 2023) * 12 + m });
+  }
+  // Drop October 2024 so that quarter is incomplete and must be omitted.
+  const gapped = levels.filter(p => p.date !== '2024-10-01');
+  const agg = aggregateIndexYoY(gapped);
+  same('aggregateIndexYoY omits a quarter with only 2 months', agg.quarterly['2024-Q4'], undefined);
+  same('aggregateIndexYoY keeps a complete quarter', typeof agg.quarterly['2024-Q2'], 'number');
+  same('aggregateIndexYoY omits an 11-month year', agg.annual[2024], undefined);
+
+  const pay = [
+    { date: '2024-12-01', value: 1000 },
+    { date: '2025-01-01', value: 1010 },
+    { date: '2025-02-01', value: 1030 },
+    { date: '2025-03-01', value: 1060 },
+  ];
+  const payroll = aggregatePayrollChange(pay);
+  near('aggregatePayrollChange quarter is the sum of monthly changes', payroll.quarterly['2025-Q1'], 60);
+  near('aggregatePayrollChange latest month', payroll.latest, 30);
+
+  const upMap = { '2024-Q1': 1, '2024-Q2': 2, '2024-Q3': 3, '2024-Q4': 4, '2023-Q4': 100 };
+  const downMap = { '2024-Q1': 4, '2024-Q2': 3, '2024-Q3': 2, '2024-Q4': 1, '2023-Q4': 0 };
+  near('quarterlyPearson perfect inverse over the last 4 shared quarters', quarterlyPearson(upMap, downMap, 4), -1, 1e-9);
+  near('quarterlyPearson with self is 1', quarterlyPearson(upMap, upMap, 4), 1, 1e-9);
+  same('quarterlyPearson needs 3 points', quarterlyPearson({ a: 1 }, { a: 2 }, 8), null);
+  same('round1 uses half-up, so 3.65 is 3.7', round1(3.65), 3.7);
+  same('date-only strings are UTC midnight', new Date('2025-01-01').toISOString().slice(0, 10), '2025-01-01');
+
   const pass = results.filter(r => r.pass).length;
   console.table(results);
   return { pass, fail: results.length - pass, results };
@@ -2478,11 +2723,12 @@ function runStatsTests() {
 function round2(v) { return Math.round(v * 100) / 100; }
 
 function fmtWindowLabel(w) {
-  const s = new Date(w.start), e = new Date(w.end);
-  const mon = d => d.toLocaleString('en-US', { month: 'short' });
-  return s.getFullYear() === e.getFullYear()
-    ? `${mon(s)}-${mon(e)} ${e.getFullYear()}`
-    : `${mon(s)} ${s.getFullYear()}-${mon(e)} ${e.getFullYear()}`;
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const s = parseFredDateParts(w.start), e = parseFredDateParts(w.end);
+  if (!s || !e) return '';
+  return s.year === e.year
+    ? `${months[s.month - 1]}-${months[e.month - 1]} ${e.year}`
+    : `${months[s.month - 1]} ${s.year}-${months[e.month - 1]} ${e.year}`;
 }
 
 const NEWS_CHART_COLORS = ['#00e5ff', '#ff9500', '#bb86fc', '#00c853'];
@@ -2616,6 +2862,7 @@ async function buildDataBundle(plan) {
       adjustedMap[t] = r.adjusted;
       providers[t] = `${r.provider}${r.cached ? ', cached' : ''} (${r.adjusted})`;
       if (r.failures.length) chips.push(`${t}: ${r.failures.map(f => `${f.provider} failed (${f.reason})`).join('; ')}; used ${r.provider}`);
+      if (r.truncated) chips.push(`${t}: Alpha Vantage compact covers about the last 100 sessions (from ${r.data[0].date}). A longer window needs Twelve Data.`);
     } else {
       chips.push(`${t}: all providers failed (${r.failures.map(f => `${f.provider}: ${f.reason}`).join('; ')})`);
     }
@@ -2792,7 +3039,7 @@ async function routeNewsQuery(query) {
   const model = getGsKeys().routerModel || NEWS_DEFAULTS.routerModel;
   const base = [
     { role: 'system', content: NEWS_ROUTER_SYSTEM },
-    { role: 'user', content: query }
+    { role: 'user', content: `Today's date is ${localISODate()} on the user's local calendar. Use it when the query says today, yesterday, or this year.\n\n${query}` }
   ];
   let cost = 0;
   let lastErr = '';
@@ -3021,6 +3268,46 @@ function wipeNewsKeys() {
   document.getElementById('newsDrawerNote').textContent = 'Keys wiped from this browser.';
 }
 
+function newsRecordedMarkup() {
+  const src = NEWS_RECORDED_SAMPLE;
+  if (!src) {
+    return `<div class="news-recorded-slot" id="newsRecordedSample">No recorded run is embedded yet. To add one, set NEWS_RECORDED_SAMPLE near the top of the News script in index.html to a file such as news-sample.gif (or .mp4), put that file next to index.html, and commit it. The README section "Recorded News sample" has the steps.</div>`;
+  }
+  const safe = escapeHtml(src);
+  const media = /\.(mp4|webm)(\?|$)/i.test(src)
+    ? `<video src="${safe}" controls playsinline></video>`
+    : `<img src="${safe}" alt="Recorded News and Analysis run">`;
+  return `<figure class="news-recorded">${media}<figcaption>Recorded run. This image is a real session and is separate from the labeled example layout below.</figcaption></figure>`;
+}
+
+function newsExampleLayout() {
+  const recorded = newsRecordedMarkup();
+  return `
+    <div class="news-explainer">
+      <p>This tab is the research assistant. With an OpenRouter key it does three things, and the model is not allowed to invent a number that gets charted:</p>
+      <p style="margin-top:8px"><strong>1. Router.</strong> A model classifies the question and picks a tier (fast, standard, or deep). It does not write the answer.</p>
+      <p style="margin-top:8px"><strong>2. Code.</strong> Prices and macro series are fetched by the page. Returns, volatility, drawdown, and correlation are computed here. Those figures are what the chart and the stats table use.</p>
+      <p style="margin-top:8px"><strong>3. Narrator.</strong> A second model writes a short sourced paragraph from the computed facts plus web results. If a provider fails, the page says which one and why.</p>
+      <p style="margin-top:8px">Price history uses Twelve Data when that key is set. Alpha Vantage is a fallback and, on the free plan, only the compact series (about 100 sessions). Stooq is not used on the public site: it is blocked by CORS and now requires its own key.</p>
+      <p style="margin-top:8px">Open Settings on this tab to add an OpenRouter key. Nothing below is a live answer.</p>
+    </div>
+    ${recorded}
+    <div class="news-example">
+      <div class="news-example-kicker">Example layout — not a model response and not a real run</div>
+      <div class="chip">Model: shown here after a real run (tier)</div>
+      <div class="chip">Router: a one-line note from the classifier</div>
+      <div class="news-chart-placeholder">A chart renders here only from series the page fetched. The narrator does not supply these numbers.</div>
+      <div class="matrix-scroll" style="margin-bottom:12px">
+        <table class="data-table"><thead><tr><th>Ticker</th><th class="right">Total Return</th><th class="right">CAGR</th><th class="right">Ann. Vol</th><th class="right">Max Drawdown</th><th>Source</th></tr></thead><tbody>
+          <tr><td class="row-header">EXAMPLE</td><td class="right">—</td><td class="right">—</td><td class="right">—</td><td class="right">—</td><td>computed in code</td></tr>
+        </tbody></table>
+      </div>
+      <div class="news-narrative">EXAMPLE NARRATIVE. In a real answer this paragraph is written by the narrator from the computed facts and from web results, with a source link on claims about current events. This sentence is a placeholder so the layout is visible without an API key. It is not a market view.</div>
+      <div class="source-row"><span class="source-chip">example.source</span></div>
+      <div class="cost-chip">This query: shown after a real run | monthly total shown here</div>
+    </div>`;
+}
+
 // ── View render ──
 function renderNews(container) {
   container.innerHTML = `
@@ -3045,10 +3332,10 @@ function renderNews(container) {
         <input type="text" id="narratorModelInput" spellcheck="false">
         <label>Deep Narrator Model (complex analysis, chosen by the router)</label>
         <input type="text" id="deepModelInput" spellcheck="false">
-        <label>Twelve Data API Key (price fallback, optional)</label>
-        <input type="password" id="tdKeyInput" placeholder="Used when Stooq fails" spellcheck="false">
-        <label>Alpha Vantage API Key (price fallback, optional)</label>
-        <input type="password" id="avKeyInput" placeholder="Used when Stooq and Twelve Data fail" spellcheck="false">
+        <label>Twelve Data API Key (price provider — this is the one that works)</label>
+        <input type="password" id="tdKeyInput" placeholder="Required for price history" spellcheck="false">
+        <label>Alpha Vantage API Key (fallback, free compact series, about 100 sessions)</label>
+        <input type="password" id="avKeyInput" placeholder="Used only if Twelve Data fails" spellcheck="false">
         <div class="btn-row">
           <button class="btn-primary" onclick="saveNewsSettings()">Save</button>
           <button class="btn-danger" onclick="wipeNewsKeys()">Wipe Keys</button>
@@ -3060,7 +3347,7 @@ function renderNews(container) {
         <input class="news-query-input" id="newsQueryInput" placeholder="Ask about markets, e.g. why are semiconductors down today" spellcheck="false">
         <button class="news-send-btn" id="newsSendBtn" onclick="runNewsQuery()">Run</button>
       </div>
-      <div id="newsResults" style="margin-top:16px">${newsLastHTML}</div>
+      <div id="newsResults" style="margin-top:16px">${newsLastHTML || (!getGsKeys().openrouter ? newsExampleLayout() : '')}</div>
       </div>
     </div>
   `;
@@ -3120,21 +3407,26 @@ function updateConnectionBadge() {
   if (isLiveData) {
     badge.className = 'connection-badge live';
     const sources = ['FRED'];
-    if (getBeaKey()) sources.push('BEA');
+    if (DATA.gdp && DATA.gdp.live) sources.push('BEA');
     badge.textContent = sources.join(' + ') + ' LIVE';
     feedLabel.textContent = 'LIVE DATA FEED';
     statusDot.style.background = 'var(--accent-green)';
+    statusDot.classList.remove('idle');
   } else if (getFredKey()) {
     badge.className = 'connection-badge static';
     badge.textContent = 'CONNECTING...';
     feedLabel.textContent = 'CONNECTING...';
     statusDot.style.background = 'var(--accent-orange)';
+    statusDot.classList.add('idle');
   } else {
     badge.className = 'connection-badge static';
     badge.textContent = 'STATIC DATA';
     feedLabel.textContent = 'STATIC MODE';
     statusDot.style.background = 'var(--text-muted)';
+    statusDot.classList.add('idle');
   }
+  const cadence = document.getElementById('refreshCadence');
+  if (cadence) cadence.textContent = isLiveData ? '5 min' : 'off';
 }
 
 // ── Settings Panel ──
@@ -3201,11 +3493,11 @@ async function testConnection() {
       const res = await fetch(url);
       const json = await res.json();
       if (json.error_code) {
-        status.innerHTML += `<span style="color:var(--accent-red)">FRED: ${json.error_message}</span>\n`;
+        status.innerHTML += `<span style="color:var(--accent-red)">FRED: ${escapeHtml(json.error_message)}</span>\n`;
       } else {
         const obs = json.observations;
         const mode = IS_LOCAL ? 'via server.py proxy' : (proxyUrl ? 'via Cloudflare Worker' : 'direct');
-        status.innerHTML += `<span style="color:var(--accent-green)">FRED: Connected (${mode})</span>  Latest CPI: ${obs[0].date} = ${parseFloat(obs[0].value).toFixed(2)}%\n`;
+        status.innerHTML += `<span style="color:var(--accent-green)">FRED: Connected (${mode})</span>  Latest CPI: ${escapeHtml(obs[0].date)} = ${parseFloat(obs[0].value).toFixed(2)}%\n`;
       }
     } catch (err) {
       const hint = (!IS_LOCAL && !proxyUrl) ? ' — You need a proxy URL for remote hosting' : '';
@@ -3220,7 +3512,7 @@ async function testConnection() {
       const res = await fetch(url);
       const json = await res.json();
       if (json.BEAAPI?.Results?.Error) {
-        status.innerHTML += `<span style="color:var(--accent-red)">BEA: ${json.BEAAPI.Results.Error.APIErrorDescription}</span>\n`;
+        status.innerHTML += `<span style="color:var(--accent-red)">BEA: ${escapeHtml(json.BEAAPI.Results.Error.APIErrorDescription)}</span>\n`;
       } else {
         status.innerHTML += `<span style="color:var(--accent-green)">BEA: Connected (direct — no proxy needed)</span>\n`;
       }
@@ -3266,8 +3558,9 @@ function saveAndConnect() {
 
   loadAllData().then(() => {
     const sources = [];
-    if (fredKey) sources.push('FRED');
-    if (beaKey) sources.push('BEA');
+    if (isLiveData) sources.push('FRED');
+    if (DATA.gdp && DATA.gdp.live) sources.push('BEA');
+    else if (beaKey) sources.push('BEA key saved (no series rendered)');
     if (blsKey) sources.push('BLS (stored)');
     const mode = IS_LOCAL ? 'server.py proxy' : (proxyUrl ? 'Cloudflare Worker' : 'direct');
     status.innerHTML += `\n<span style="color:var(--accent-green)">Connected: ${sources.join(', ')} via ${mode}</span>`;
@@ -3281,6 +3574,7 @@ function disconnectApi() {
   localStorage.removeItem('ghost_bls_api_key');
   localStorage.removeItem('ghost_proxy_url');
   isLiveData = false;
+  if (DATA.gdp) DATA.gdp.live = false;
   if (fredRefreshInterval) clearInterval(fredRefreshInterval);
   updateConnectionBadge();
   document.getElementById('fredKeyInput').value = '';
@@ -3325,22 +3619,221 @@ async function fetchBEA(tableName, frequency = 'Q', year = 'X') {
 }
 
 // ── Data Transformers ──
+// Dates are taken from the YYYY-MM-DD string. new Date('YYYY-MM-DD') is UTC
+// and shifts the calendar month for users west of UTC.
+function quarterKeyFromDate(date) {
+  const p = parseFredDateParts(date);
+  if (!p) return null;
+  return `${p.year}-Q${Math.ceil(p.month / 3)}`;
+}
+
+function shiftMonth(date, delta) {
+  const p = parseFredDateParts(date);
+  if (!p) return null;
+  let m = p.month + delta;
+  let y = p.year;
+  while (m < 1) { m += 12; y -= 1; }
+  while (m > 12) { m -= 12; y += 1; }
+  return `${y}-${String(m).padStart(2, '0')}-01`;
+}
+
 function toQuarterlyMap(arr) {
   const map = {};
-  arr.forEach(({ date, value }) => {
-    const d = new Date(date);
-    const q = Math.ceil((d.getMonth() + 1) / 3);
-    map[`${d.getFullYear()}-Q${q}`] = Math.round(value * 10) / 10;
+  (arr || []).forEach(({ date, value }) => {
+    const key = quarterKeyFromDate(date);
+    if (!key || !isFinite(value)) return;
+    map[key] = round1(value);
   });
   return map;
 }
 
 function toAnnualMap(arr) {
   const map = {};
-  arr.forEach(({ date, value }) => {
-    map[new Date(date).getFullYear()] = Math.round(value * 10) / 10;
+  (arr || []).forEach(({ date, value }) => {
+    const p = parseFredDateParts(date);
+    if (!p || !isFinite(value)) return;
+    map[p.year] = round1(value);
   });
   return map;
+}
+
+function observationsToMap(arr) {
+  const map = {};
+  (arr || []).forEach(({ date, value }) => {
+    const p = parseFredDateParts(date);
+    if (!p || value == null || !isFinite(value)) return;
+    map[`${p.year}-${String(p.month).padStart(2, '0')}-01`] = value;
+  });
+  return map;
+}
+
+function aggregateIndexYoY(arr) {
+  const m = observationsToMap(arr);
+  const dates = Object.keys(m).sort();
+  const qBuckets = {};
+  dates.forEach(d => {
+    const q = quarterKeyFromDate(d);
+    (qBuckets[q] = qBuckets[q] || []).push(m[d]);
+  });
+  const quarterlyLevels = {};
+  Object.keys(qBuckets).forEach(q => {
+    if (qBuckets[q].length === 3) quarterlyLevels[q] = qBuckets[q].reduce((a, b) => a + b, 0) / 3;
+  });
+  const quarterly = {};
+  Object.keys(quarterlyLevels).sort().forEach(q => {
+    const [y, qi] = q.split('-Q');
+    const prev = `${+y - 1}-Q${qi}`;
+    if (quarterlyLevels[prev]) quarterly[q] = round1((quarterlyLevels[q] / quarterlyLevels[prev] - 1) * 100);
+  });
+  const yearBuckets = {};
+  dates.forEach(d => { (yearBuckets[d.slice(0, 4)] = yearBuckets[d.slice(0, 4)] || []).push(m[d]); });
+  const yearAvg = {};
+  Object.keys(yearBuckets).forEach(y => {
+    if (yearBuckets[y].length === 12) yearAvg[y] = yearBuckets[y].reduce((a, b) => a + b, 0) / 12;
+  });
+  const annual = {};
+  Object.keys(yearAvg).forEach(y => {
+    const prev = String(+y - 1);
+    if (yearAvg[prev]) annual[+y] = round1((yearAvg[y] / yearAvg[prev] - 1) * 100);
+  });
+  const last = dates[dates.length - 1] || null;
+  const yoyAt = d => {
+    const p = shiftMonth(d, -12);
+    if (!d || !p || m[d] == null || m[p] == null || m[p] === 0) return null;
+    return round1((m[d] / m[p] - 1) * 100);
+  };
+  const momAt = d => {
+    const p = shiftMonth(d, -1);
+    if (!d || !p || m[d] == null || m[p] == null || m[p] === 0) return null;
+    return round1((m[d] / m[p] - 1) * 100);
+  };
+  return { quarterly, annual, latest: yoyAt(last), prev: last ? yoyAt(shiftMonth(last, -1)) : null, mom: momAt(last), asOf: last };
+}
+
+function aggregateLevelAverage(arr, divisor = 1) {
+  const m = observationsToMap(arr);
+  const dates = Object.keys(m).sort();
+  const qBuckets = {};
+  dates.forEach(d => { (qBuckets[quarterKeyFromDate(d)] = qBuckets[quarterKeyFromDate(d)] || []).push(m[d]); });
+  const quarterly = {};
+  Object.keys(qBuckets).forEach(q => {
+    if (qBuckets[q].length === 3) quarterly[q] = round1(qBuckets[q].reduce((a, b) => a + b, 0) / 3 / divisor);
+  });
+  const yearBuckets = {};
+  dates.forEach(d => { (yearBuckets[d.slice(0, 4)] = yearBuckets[d.slice(0, 4)] || []).push(m[d]); });
+  const annual = {};
+  Object.keys(yearBuckets).forEach(y => {
+    if (yearBuckets[y].length === 12) annual[+y] = round1(yearBuckets[y].reduce((a, b) => a + b, 0) / 12 / divisor);
+  });
+  const last = dates[dates.length - 1] || null;
+  const prevDate = last ? shiftMonth(last, -1) : null;
+  return {
+    quarterly, annual,
+    latest: last ? round1(m[last] / divisor) : null,
+    prev: prevDate && m[prevDate] != null ? round1(m[prevDate] / divisor) : null,
+    asOf: last
+  };
+}
+
+function aggregatePayrollChange(arr) {
+  const m = observationsToMap(arr);
+  const dates = Object.keys(m).sort();
+  const ch = {};
+  dates.forEach(d => {
+    const p = shiftMonth(d, -1);
+    if (p && m[p] != null) ch[d] = m[d] - m[p];
+  });
+  const qCounts = {};
+  dates.forEach(d => { const q = quarterKeyFromDate(d); qCounts[q] = (qCounts[q] || 0) + 1; });
+  const qCh = {};
+  Object.keys(ch).forEach(d => { const q = quarterKeyFromDate(d); (qCh[q] = qCh[q] || []).push(ch[d]); });
+  const quarterly = {};
+  Object.keys(qCh).forEach(q => {
+    if (qCounts[q] === 3 && qCh[q].length === 3) quarterly[q] = round1(qCh[q].reduce((a, b) => a + b, 0));
+  });
+  const annual = {};
+  new Set(dates.map(d => d.slice(0, 4))).forEach(y => {
+    const a = `${y}-12-01`, b = `${+y - 1}-12-01`;
+    if (m[a] != null && m[b] != null) annual[+y] = round1(m[a] - m[b]);
+  });
+  const last = dates[dates.length - 1] || null;
+  const chDates = Object.keys(ch).sort();
+  const last6 = chDates.slice(-6).map(d => ch[d]);
+  const avg = xs => xs.length ? round1(xs.reduce((a, b) => a + b, 0) / xs.length) : null;
+  return {
+    quarterly, annual,
+    latest: last && ch[last] != null ? round1(ch[last]) : null,
+    prev: last && ch[shiftMonth(last, -1)] != null ? round1(ch[shiftMonth(last, -1)]) : null,
+    avg3: avg(last6.slice(-3)),
+    avg6: avg(last6),
+    asOf: last
+  };
+}
+
+function dropStaleProjections(series) {
+  if (!series || !series.projected) return;
+  Object.keys(series.quarterly || {}).forEach(k => { delete series.projected[k]; });
+}
+
+function applyIndexYoY(target, arr) {
+  if (!arr || !arr.length) return false;
+  const agg = aggregateIndexYoY(arr);
+  if (!agg.asOf || agg.latest == null) return false;
+  target.quarterly = agg.quarterly;
+  target.annual = agg.annual;
+  target.latest = agg.latest;
+  if (agg.prev != null) target.prevMonth = agg.prev;
+  if (agg.mom != null) target.mom = agg.mom;
+  target.asOf = agg.asOf;
+  dropStaleProjections(target);
+  return true;
+}
+
+function applyLevelAverage(target, arr, divisor) {
+  if (!arr || !arr.length) return false;
+  const agg = aggregateLevelAverage(arr, divisor);
+  if (!agg.asOf || agg.latest == null) return false;
+  target.quarterly = agg.quarterly;
+  if (target.annual) target.annual = agg.annual;
+  target.latest = agg.latest;
+  if (agg.prev != null) target.prevMonth = agg.prev;
+  target.asOf = agg.asOf;
+  dropStaleProjections(target);
+  return true;
+}
+
+function applyPayroll(target, arr) {
+  if (!arr || !arr.length) return false;
+  const agg = aggregatePayrollChange(arr);
+  if (!agg.asOf || agg.latest == null) return false;
+  target.quarterly = agg.quarterly;
+  target.annual = agg.annual;
+  target.latestMonth = agg.latest;
+  if (agg.prev != null) target.prevMonth = agg.prev;
+  if (agg.avg3 != null) target.avg3mo = agg.avg3;
+  if (agg.avg6 != null) target.avg6mo = agg.avg6;
+  target.asOf = agg.asOf;
+  dropStaleProjections(target);
+  return true;
+}
+
+function applyBeaGdp(rows) {
+  const quarterly = {};
+  (rows || []).forEach(d => {
+    if (String(d.LineNumber) !== '1' || !d.TimePeriod) return;
+    const m = /^(\d{4})Q([1-4])$/.exec(String(d.TimePeriod));
+    if (!m) return;
+    const v = parseFloat(String(d.DataValue).replace(/,/g, ''));
+    if (!isFinite(v)) return;
+    quarterly[`${m[1]}-Q${m[2]}`] = round1(v);
+  });
+  const keys = Object.keys(quarterly).sort();
+  if (!keys.length) return false;
+  DATA.gdp.quarterly = quarterly;
+  DATA.gdp.latest = quarterly[keys[keys.length - 1]];
+  DATA.gdp.asOf = keys[keys.length - 1];
+  DATA.gdp.live = true;
+  return true;
 }
 
 // ── Load All Data ──
@@ -3352,99 +3845,50 @@ async function loadAllData() {
 
   try {
     const [
-      cpiYoY_q, cpiYoY_a, cpiMoM,
-      coreCpiYoY_q, coreCpiYoY_a,
-      ppiYoY_q, ppiYoY_a, ppiMoM,
-      corePpiYoY_q,
-      nfpChange_q, nfpChange_m,
-      unrate_q,
-      aheYoY_q,
-      jolts_q,
+      cpiLevels, coreLevels, ppiLevels, ppiCoreLevels,
+      payLevels, unrateLevels, aheLevels, joltsLevels,
       u6rate, lfpr,
     ] = await Promise.all([
-      fetchFRED('CPIAUCSL',       'pc1', 'q'),
-      fetchFRED('CPIAUCSL',       'pc1', 'a'),
-      fetchFRED('CPIAUCSL',       'pch', 'm', '2024-01-01'),
-      fetchFRED('CPILFESL',       'pc1', 'q'),
-      fetchFRED('CPILFESL',       'pc1', 'a'),
-      fetchFRED('PPIFIS',         'pc1', 'q'),
-      fetchFRED('PPIFIS',         'pc1', 'a'),
-      fetchFRED('PPIFIS',         'pch', 'm', '2024-01-01'),
-      fetchFRED('PPIFES',         'pc1', 'q'),
-      fetchFRED('PAYEMS',         'chg', 'q'),
-      fetchFRED('PAYEMS',         'chg', 'm', '2024-01-01'),
-      fetchFRED('UNRATE',         'lin', 'q'),
-      fetchFRED('CES0500000003',  'pc1', 'q'),
-      fetchFRED('JTSJOL',         'lin', 'q'),
+      fetchFRED('CPIAUCSL',       'lin', 'm', '2018-01-01'),
+      fetchFRED('CPILFESL',       'lin', 'm', '2018-01-01'),
+      fetchFRED('PPIFIS',         'lin', 'm', '2018-01-01'),
+      fetchFRED('PPIFES',         'lin', 'm', '2018-01-01'),
+      fetchFRED('PAYEMS',         'lin', 'm', '2018-01-01'),
+      fetchFRED('UNRATE',         'lin', 'm', '2018-01-01'),
+      fetchFRED('CES0500000003',  'lin', 'm', '2018-01-01'),
+      fetchFRED('JTSJOL',         'lin', 'm', '2018-01-01'),
       fetchFRED('U6RATE',         'lin', 'm', '2024-01-01'),
       fetchFRED('CIVPART',        'lin', 'm', '2024-01-01'),
     ]);
 
-    // Only update DATA if we got results
-    if (cpiYoY_q.length > 0) {
-      const last = arr => arr.length > 0 ? arr[arr.length - 1].value : null;
-      const prev = arr => arr.length > 1 ? arr[arr.length - 2].value : null;
+    const applied = [
+      applyIndexYoY(DATA.cpi, cpiLevels),
+      applyIndexYoY(DATA.cpiCore, coreLevels),
+      applyIndexYoY(DATA.ppi, ppiLevels),
+      applyIndexYoY(DATA.ppiCore, ppiCoreLevels),
+      applyPayroll(DATA.nfp, payLevels),
+      applyLevelAverage(DATA.unrate, unrateLevels, 1),
+      applyIndexYoY(DATA.ahe, aheLevels),
+      applyLevelAverage(DATA.jolts, joltsLevels, 1000),
+    ];
+    if (u6rate.length) DATA.unrate.u6 = round1(u6rate[u6rate.length - 1].value);
+    if (lfpr.length) DATA.unrate.lfpr = round1(lfpr[lfpr.length - 1].value);
 
-      DATA.cpi.quarterly     = toQuarterlyMap(cpiYoY_q);
-      DATA.cpi.annual        = toAnnualMap(cpiYoY_a);
-      DATA.cpiCore.quarterly = toQuarterlyMap(coreCpiYoY_q);
-      DATA.cpiCore.annual    = toAnnualMap(coreCpiYoY_a);
-      DATA.ppi.quarterly     = toQuarterlyMap(ppiYoY_q);
-      DATA.ppi.annual        = toAnnualMap(ppiYoY_a);
-      DATA.ppiCore.quarterly = toQuarterlyMap(corePpiYoY_q);
-      DATA.nfp.quarterly     = toQuarterlyMap(nfpChange_q);
-      DATA.unrate.quarterly  = toQuarterlyMap(unrate_q);
-      DATA.ahe.quarterly     = toQuarterlyMap(aheYoY_q);
-      DATA.jolts.quarterly   = toQuarterlyMap(jolts_q);
-
-      // Latest values from most recent monthly data
-      DATA.cpi.latest     = last(cpiYoY_q) ?? DATA.cpi.latest;
-      DATA.cpi.prevMonth  = prev(cpiYoY_q) ?? DATA.cpi.prevMonth;
-      DATA.cpi.mom        = last(cpiMoM) ?? DATA.cpi.mom;
-      DATA.cpiCore.latest = last(coreCpiYoY_q) ?? DATA.cpiCore.latest;
-      DATA.cpiCore.prevMonth = prev(coreCpiYoY_q) ?? DATA.cpiCore.prevMonth;
-      DATA.ppi.latest     = last(ppiYoY_q) ?? DATA.ppi.latest;
-      DATA.ppi.prevMonth  = prev(ppiYoY_q) ?? DATA.ppi.prevMonth;
-      DATA.ppi.mom        = last(ppiMoM) ?? DATA.ppi.mom;
-      DATA.ppiCore.latest = last(corePpiYoY_q) ?? DATA.ppiCore.latest;
-      DATA.ppiCore.prevMonth = prev(corePpiYoY_q) ?? DATA.ppiCore.prevMonth;
-      DATA.unrate.latest  = last(unrate_q) ?? DATA.unrate.latest;
-      DATA.unrate.prevMonth = prev(unrate_q) ?? DATA.unrate.prevMonth;
-      DATA.unrate.u6      = last(u6rate) ?? DATA.unrate.u6;
-      DATA.unrate.lfpr    = last(lfpr) ?? DATA.unrate.lfpr;
-      DATA.nfp.latestMonth = last(nfpChange_m) ?? DATA.nfp.latestMonth;
-      DATA.nfp.prevMonth   = prev(nfpChange_m) ?? DATA.nfp.prevMonth;
-      DATA.ahe.latest     = last(aheYoY_q) ?? DATA.ahe.latest;
-      DATA.jolts.latest   = last(jolts_q) ?? DATA.jolts.latest;
-
+    if (applied.some(Boolean)) {
       isLiveData = true;
       updateConnectionBadge();
-
-      // Re-render everything with live data
       buildSummaryCards();
       buildTicker();
       renderView(currentView);
-
-      // Flash the cards to signal an update
-      document.querySelectorAll('.summary-card .value').forEach(el => {
-        el.classList.add('update-flash');
-        setTimeout(() => el.classList.remove('update-flash'), 1500);
-      });
-
       console.log('[FRED] Live data loaded at', new Date().toLocaleTimeString());
     }
 
-    // ── BEA: Load GDP and PCE if key exists ──
     if (getBeaKey()) {
       try {
         const gdpData = await fetchBEA('T10101', 'Q', 'X');
-        if (gdpData && gdpData.length > 0) {
-          // Extract real GDP growth rate (Line 1 = GDP)
-          const gdpRows = gdpData.filter(d => d.LineNumber === '1' && d.TimePeriod);
-          if (gdpRows.length > 0) {
-            const latest = gdpRows[gdpRows.length - 1];
-            console.log(`[BEA] GDP latest: ${latest.TimePeriod} = ${latest.DataValue}%`);
-          }
+        if (applyBeaGdp(gdpData)) {
+          updateConnectionBadge();
+          if (currentView === 'overview') renderView(currentView);
         }
       } catch (err) { console.warn('[BEA] GDP load error:', err); }
     }
@@ -3453,17 +3897,7 @@ async function loadAllData() {
   }
 }
 
-// ═══════════════════════════════════════════
-// AUTO-REFRESH (5 min for live, 60s flash for static)
-// ═══════════════════════════════════════════
-setInterval(() => {
-  if (isLiveData) return; // skip flash if live data is active
-  document.querySelectorAll('.summary-card .value').forEach(el => {
-    el.classList.add('update-flash');
-    setTimeout(() => el.classList.remove('update-flash'), 1500);
-  });
-}, 60000);
-
+// Live data refreshes every 5 minutes. Static mode does not animate.
 // INITIAL RENDER
 renderView('overview');
 

@@ -1,0 +1,27 @@
+name: tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  stats:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: browser-actions/setup-chrome@v1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save puppeteer-core
+      - name: Embedded stats suite in America/Chicago
+        run: node scripts/run-stats-tests.mjs
+        env:
+          TZ: America/Chicago
+
+  secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sh scripts/scan-secrets.sh --self-test
+      - run: sh scripts/scan-secrets.sh
