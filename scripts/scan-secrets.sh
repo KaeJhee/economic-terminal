@@ -23,7 +23,10 @@ scan_stream() {
   # grep -E returns 1 when there is no match. That is success for a scanner.
   if grep -nE -e "$or_pat" -e "$ant_pat" -e "$aws_pat" -e "$gh_pat" -e "$pat_pat" -e "$slack_pat" -e "$key_pat" -e "$priv" > /tmp/gs-secret-hits.$$ 2>/dev/null; then
     echo "secret-scan: match in $label" >&2
-    sed "s/^/$label:/" /tmp/gs-secret-hits.$$ >&2
+    # printf, not sed: a path label contains slashes, which break s/^/label/.
+    while IFS= read -r line || [ -n "$line" ]; do
+      printf '%s:%s\n' "$label" "$line" >&2
+    done < /tmp/gs-secret-hits.$$
     rm -f /tmp/gs-secret-hits.$$
     return 1
   fi
@@ -33,7 +36,30 @@ scan_stream() {
 
 if [ "${1:-}" = "--self-test" ]; then
   fail=0
-  printf '%s\n' 'sk-or-v1-abcdefghijklmnopqrstuv' | scan_stream probe && fail=1
+  # Built at runtime. A literal token of this shape in this file is a hit
+  # when the repo scan reads the script.
+  sample=$(printf '%s%s' 'sk-or-v1-abc' 'defghijklmnopqrstuv')
+  set +e
+  report=$(printf '%s\n' "$sample" | scan_stream 'scripts/scan-secrets.sh' 2>&1)
+  status=$?
+  set -e
+  if [ "$status" -eq 0 ]; then
+    echo "secret-scan self-test: sample key was not detected" >&2
+    fail=1
+  fi
+  case "$report" in
+    *'scripts/scan-secrets.sh:'*"$sample"*) ;;
+    *)
+      echo "secret-scan self-test: slash path was not reported" >&2
+      fail=1
+      ;;
+  esac
+  case "$report" in
+    *'unknown option'*)
+      echo "secret-scan self-test: reporter crashed" >&2
+      fail=1
+      ;;
+  esac
   printf '%s\n' 'sk-or-...' | scan_stream probe || fail=1
   printf '%s\n' 'placeholder api_key=YOUR_FRED_KEY' | scan_stream probe || fail=1
   if [ "$fail" -ne 0 ]; then
