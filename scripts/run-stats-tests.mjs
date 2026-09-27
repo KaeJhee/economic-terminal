@@ -14,6 +14,9 @@ function contentType(file) {
   if (file.endsWith('.html')) return 'text/html; charset=utf-8';
   if (file.endsWith('.js')) return 'text/javascript; charset=utf-8';
   if (file.endsWith('.css')) return 'text/css; charset=utf-8';
+  if (file.endsWith('.png')) return 'image/png';
+  if (file.endsWith('.svg')) return 'image/svg+xml';
+  if (file.endsWith('.ico')) return 'image/vnd.microsoft.icon';
   return 'application/octet-stream';
 }
 
