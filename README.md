@@ -52,8 +52,7 @@ economic-terminal/
 ## Getting Started
 
 1. Open `index.html` in a browser, or run `python server.py` and open http://127.0.0.1:8080.
-2. `Economic_Terminal_Instructional_Guide.pdf` is the longer teaching guide. It predates the News tab and this refresh, so where it disagrees with this README, the README and `snapshot-sources.md` are the current description.
-3. `api-guide.html` walks through saving a FRED key.
+2. `api-guide.html` walks through saving a FRED key.
 
 The dashboard has an **API** button in the top-right. Keys stay in this browser's `localStorage`. They are not in the source file.
 
